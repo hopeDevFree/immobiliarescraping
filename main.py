@@ -97,7 +97,7 @@ async def scrape():
 
 
 app.start()
-scheduler.add_job(scrape, "interval", minutes=3, next_run_time=datetime.now() + timedelta(seconds=10))
+scheduler.add_job(scrape, "interval", minutes=30, next_run_time=datetime.now() + timedelta(seconds=10))
 scheduler.start()
 keep_alive()
 idle()
