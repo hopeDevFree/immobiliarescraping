@@ -1,7 +1,6 @@
 from contextlib import closing
 
 import httpx
-from telegraph import Telegraph
 
 from pyrogram import Client, idle
 import tgcrypto
