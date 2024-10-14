@@ -91,7 +91,7 @@ async def scrape():
                         response = await client.get(immo_url)
                         json_test = response.json()
 
-                await app.send_message(chat_id='5453376840',
+                await app.send_message(chat_id=5453376840,
                                        text="Finito scraping")
 
 
