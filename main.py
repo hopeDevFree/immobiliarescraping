@@ -34,11 +34,11 @@ async def scrape():
         with conn.cursor() as cur:
 
             immo_url = ("https://www.immobiliare.it/api-next/search-list/real-estates/?"
-                        "raggio=5000"
+                        "raggio=10000"
                         "&centro=40.87414%2C14.34105"
                         "&idContratto=2"
                         "&idCategoria=1"
-                        "&prezzoMassimo=800"
+                        "&prezzoMassimo=1000"
                         "&criterio=prezzo"
                         "&ordine=asc"
                         "&arredato=on"
@@ -75,11 +75,11 @@ async def scrape():
                         current_page = current_page + 1
 
                         immo_url = ("https://www.immobiliare.it/api-next/search-list/real-estates/?"
-                                    "raggio=5000"
+                                    "raggio=10000"
                                     "&centro=40.87414%2C14.34105"
                                     "&idContratto=2"
                                     "&idCategoria=1"
-                                    "&prezzoMassimo=800"
+                                    "&prezzoMassimo=1000"
                                     "&criterio=prezzo"
                                     "&ordine=asc"
                                     "&arredato=on"
