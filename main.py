@@ -1,6 +1,7 @@
 from contextlib import closing
 
 import httpx
+from geopy.distance import geodesic
 
 from pyrogram import Client, idle
 from pyrogram.errors import FloodWait
@@ -99,8 +100,17 @@ async def send_try_message(result):
 <a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
 🔗 <a href='{result["seo"]["url"]}'>{result["seo"]["title"]}</a>
 
-💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}""",
+💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}
+🛏️ <b>Stanze da letto</b>: {result['realEstate']['properties'][0]['bedRoomsNumber']}
+🗺️ <b>Distanza</b>: {str(calculate_distance(result['realEstate']['properties'][0]['location']['latitude'], result['realEstate']['properties'][0]['location']['longitude']))} km
+📏 <b>Superficie</b>: {result['realEstate']['properties'][0]['surface']}
+🚽 <b>Bagni</b>: {result['realEstate']['properties'][0]['bathrooms']}
+""",
                            disable_web_page_preview=False)
+
+
+def calculate_distance(lat, long):
+    return geodesic((40.87414, 14.34105), (lat, long)).kilometers
 
 
 app.start()

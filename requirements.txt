@@ -6,3 +6,4 @@ git+https://github.com/KurimuzonAkuma/pyrogram.git@v2.1.17
 python-dotenv
 flask
 psycopg2
+geopy
