@@ -3,9 +3,10 @@ from contextlib import closing
 import httpx
 
 from pyrogram import Client, idle
+from pyrogram.errors import FloodWait
 import tgcrypto
 import os
-
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 
@@ -59,14 +60,11 @@ async def scrape():
                     for result in json_test['results']:
                         cur.execute("SELECT * FROM annunci WHERE url = %s", (result['seo']['url'],))
                         if cur.fetchone() is None and 'photo' in result['realEstate']['properties'][0]:
-                            await app.send_message(chat_id='@immobiliarescrape',
-                                                   text=f"""🏠 <b>Nuovo annuncio!</b>
-<a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
-🔗 <a href='{result["seo"]["url"]}'>{result["seo"]["title"]}</a>
-
-💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}
-""",
-                                                   disable_web_page_preview=False)
+                            try:
+                                await send_try_message(result)
+                            except FloodWait as ex_flood:
+                                await asyncio.sleep(ex_flood.value + 1)
+                                await send_try_message(result)
 
                             cur.execute("INSERT INTO annunci(url) values(%s)", (result['seo']['url'],))
                         conn.commit()
@@ -93,6 +91,16 @@ async def scrape():
 
                 await app.send_message(chat_id=5453376840,
                                        text="Finito scraping")
+
+
+async def send_try_message(result):
+    await app.send_message(chat_id='@immobiliarescrape',
+                           text=f"""🏠 <b>Nuovo annuncio!</b>
+<a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
+🔗 <a href='{result["seo"]["url"]}'>{result["seo"]["title"]}</a>
+
+💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}""",
+                           disable_web_page_preview=False)
 
 
 app.start()
