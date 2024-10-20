@@ -95,6 +95,11 @@ async def scrape():
 
 
 async def send_try_message(result):
+    if "bathrooms" in result['realEstate']['properties'][0]:
+        bathNum = result['realEstate']['properties'][0]['bathrooms']
+    else:
+        bathNum = "N/A"
+
     await app.send_message(chat_id='@immobiliarescrape',
                            text=f"""🏠 <b>Nuovo annuncio!</b>
 <a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
@@ -104,7 +109,7 @@ async def send_try_message(result):
 🛏️ <b>Stanze da letto</b>: {result['realEstate']['properties'][0]['bedRoomsNumber']}
 🗺️ <b>Distanza</b>: {str(calculate_distance(result['realEstate']['properties'][0]['location']['latitude'], result['realEstate']['properties'][0]['location']['longitude']))} km
 📏 <b>Superficie</b>: {result['realEstate']['properties'][0]['surface']}
-🚽 <b>Bagni</b>: {result['realEstate']['properties'][0]['bathrooms']}
+🚽 <b>Bagni</b>: {bathNum}
 """,
                            disable_web_page_preview=False)
 
