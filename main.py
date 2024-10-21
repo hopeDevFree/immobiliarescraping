@@ -100,13 +100,18 @@ async def send_try_message(result):
     else:
         bathNum = "N/A"
 
+    if "bedRoomsNumber" in result['realEstate']['properties'][0]:
+        bedNum = result['realEstate']['properties'][0]['bedRoomsNumber']
+    else:
+        bedNum = "N/A"
+
     await app.send_message(chat_id='@immobiliarescrape',
                            text=f"""🏠 <b>Nuovo annuncio!</b>
 <a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
 🔗 <a href='{result["seo"]["url"]}'>{result["seo"]["title"]}</a>
 
 💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}
-🛏️ <b>Stanze da letto</b>: {result['realEstate']['properties'][0]['bedRoomsNumber']}
+🛏️ <b>Stanze da letto</b>: {bedNum}
 🗺️ <b>Distanza</b>: {str(calculate_distance(result['realEstate']['properties'][0]['location']['latitude'], result['realEstate']['properties'][0]['location']['longitude']))} km
 📏 <b>Superficie</b>: {result['realEstate']['properties'][0]['surface']}
 🚽 <b>Bagni</b>: {bathNum}
