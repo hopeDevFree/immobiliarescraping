@@ -22,8 +22,6 @@ app = Client("immobiliarescrape",
              api_hash=os.environ['api_hash'],
              bot_token=os.environ['bot_token'])
 
-scheduler = AsyncIOScheduler(timezone="Europe/Rome")
-
 
 async def scrape():
     with closing(psycopg2.connect(
@@ -123,8 +121,9 @@ def calculate_distance(lat, long):
     return geodesic((40.87414, 14.34105), (lat, long)).kilometers
 
 
-app.start()
+loop = asyncio.get_event_loop()
+scheduler = AsyncIOScheduler(timezone="Europe/Rome", event_loop=loop)
 scheduler.add_job(scrape, "interval", minutes=30, next_run_time=datetime.now() + timedelta(seconds=10))
 scheduler.start()
 keep_alive()
-idle()
+app.run()
