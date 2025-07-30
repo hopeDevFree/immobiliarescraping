@@ -1,130 +1,97 @@
-from contextlib import closing
+import os
 
 import httpx
-from geopy.distance import geodesic
-
-from pyrogram import Client, idle
-from pyrogram.errors import FloodWait
-import tgcrypto
-import os
-import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta
-
+import asyncio
 from dotenv import load_dotenv
-from keep_alive import keep_alive
+from datetime import datetime, timedelta
+from pyrogram import Client, filters
+import requests
 import psycopg2
+from keep_alive import keep_alive
 
 load_dotenv()
 
-app = Client("immobiliarescrape",
-             api_id=os.environ['api_id'],
-             api_hash=os.environ['api_hash'],
-             bot_token=os.environ['bot_token'])
+conn = psycopg2.connect(
+    dbname=os.getenv("db_name"),
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
+    host=os.getenv("db_host"),
+    port=os.getenv("db_port")
+)
+cur = conn.cursor()
 
-scheduler = AsyncIOScheduler(timezone="Europe/Rome")
+insert_into_annunci = """
+        INSERT INTO annunci(id)
+        VALUES (%s)
+    """
 
+select_from_annunci = """ SELECT * 
+FROM annunci 
+WHERE id = %s
+"""
 
-async def scrape():
-    with closing(psycopg2.connect(
-            database=os.environ["db_name"],
-            host=os.environ["db_host"],
-            user=os.environ["db_user"],
-            password=os.environ["db_password"],
-            port=os.environ["db_port"]
-    )) as conn:
-        with conn.cursor() as cur:
+app = Client(name=os.getenv("client_name"), api_id=os.getenv("api_id"), api_hash=os.getenv("api_hash"),
+             bot_token=os.getenv("bot_token"))
 
-            immo_url = ("https://www.immobiliare.it/api-next/search-list/real-estates/?"
-                        "raggio=10000"
-                        "&centro=40.87414%2C14.34105"
-                        "&idContratto=2"
-                        "&idCategoria=1"
-                        "&prezzoMassimo=1000"
-                        "&criterio=prezzo"
-                        "&ordine=asc"
-                        "&arredato=on"
-                        "&__lang=it"
-                        "&pag=1"
-                        "&paramsCount=11"
-                        "&path=%2Fsearch-list%2F")
+url_ricerca_case = ("https://www.immobiliare.it/api-next/search-list/listings/?"
+                    "raggio=10000"
+                    "&centro=40.87414%2C14.34105"
+                    "&idContratto=2"
+                    "&idCategoria=1"
+                    "&prezzoMassimo=1000"
+                    "&arredato=on"
+                    "&__lang=it"
+                    "&pag={}"
+                    "&paramsCount=8"
+                    "&path=%2Fsearch-list%2F")
 
-            async with httpx.AsyncClient() as client:
-                response = await client.get(immo_url)
-                json_test = response.json()
-
-                current_page = json_test['currentPage']
-                max_pages = json_test['maxPages']
-
-                while current_page <= max_pages:
-
-                    for result in json_test['results']:
-                        cur.execute("SELECT * FROM annunci WHERE url = %s", (result['seo']['url'],))
-                        if cur.fetchone() is None and 'photo' in result['realEstate']['properties'][0]:
-                            try:
-                                await send_try_message(result)
-                            except FloodWait as ex_flood:
-                                await asyncio.sleep(ex_flood.value + 1)
-                                await send_try_message(result)
-
-                            cur.execute("INSERT INTO annunci(url) values(%s)", (result['seo']['url'],))
-                        conn.commit()
-
-                    if current_page <= max_pages:
-                        current_page = current_page + 1
-
-                        immo_url = ("https://www.immobiliare.it/api-next/search-list/real-estates/?"
-                                    "raggio=10000"
-                                    "&centro=40.87414%2C14.34105"
-                                    "&idContratto=2"
-                                    "&idCategoria=1"
-                                    "&prezzoMassimo=1000"
-                                    "&criterio=prezzo"
-                                    "&ordine=asc"
-                                    "&arredato=on"
-                                    "&__lang=it"
-                                    f"&pag={current_page}"
-                                    "&paramsCount=11"
-                                    "&path=%2Fsearch-list%2F")
-
-                        response = await client.get(immo_url)
-                        json_test = response.json()
-
-                await app.send_message(chat_id=5453376840,
-                                       text="Finito scraping")
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
+}
 
 
-async def send_try_message(result):
-    if "bathrooms" in result['realEstate']['properties'][0]:
-        bathNum = result['realEstate']['properties'][0]['bathrooms']
-    else:
-        bathNum = "N/A"
+@app.on_message()
+async def scrape_on_message(client, message):
+    current_page = 0
+    max_pages = 1
+    while current_page < max_pages:
 
-    if "bedRoomsNumber" in result['realEstate']['properties'][0]:
-        bedNum = result['realEstate']['properties'][0]['bedRoomsNumber']
-    else:
-        bedNum = "N/A"
+        current_page = current_page + 1
 
-    await app.send_message(chat_id='@immobiliarescrape',
-                           text=f"""🏠 <b>Nuovo annuncio!</b>
-<a href='{result['realEstate']['properties'][0]['photo']['urls']['large']}'> </a>
-🔗 <a href='{result["seo"]["url"]}'>{result["seo"]["title"]}</a>
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url_ricerca_case.format(current_page), headers=headers)
+            json = response.json()
 
-💶 <b>Prezzo</b>: {result['realEstate']['price']['formattedValue']}
-🛏️ <b>Stanze da letto</b>: {bedNum}
-🗺️ <b>Distanza</b>: {str(calculate_distance(result['realEstate']['properties'][0]['location']['latitude'], result['realEstate']['properties'][0]['location']['longitude']))} km
-📏 <b>Superficie</b>: {result['realEstate']['properties'][0]['surface']}
-🚽 <b>Bagni</b>: {bathNum}
-""",
-                           disable_web_page_preview=False)
+        max_pages = json['maxPages']
+        for result in json['results']:
+            url_result = result['seo']['url']
+
+            if 'photo' in result['realEstate']['properties'][0]:
+                url_image = result['realEstate']['properties'][0]['photo']['urls']['medium']
+            else:
+                url_image = "https://unsplash.com/it/foto/gatto-in-bianco-e-nero-sdraiato-su-una-sedia-di-bambu-marrone-allinterno-della-stanza-gKXKBY-C-Dk"
+            price = result['realEstate']['properties'][0]['price']['value']
+            title = result['seo']['anchor']
+            id_result = result['realEstate']['id']
+
+            cur.execute(select_from_annunci, (id_result,))
+            exists = cur.fetchone()
+            if exists is None:
+                cur.execute(insert_into_annunci, (id_result,))
+                await app.send_message(chat_id=5239432590,
+                                       text=f"""<a href={url_image}>🏠</a> <b>{title}</b>
+💲 <b>Prezzo</b>: € {price}/mese
+
+🔗 <b><i><a href={url_result}>Link</a></i></b>
+                    """)
+
+        conn.commit()
 
 
-def calculate_distance(lat, long):
-    return geodesic((40.87414, 14.34105), (lat, long)).kilometers
-
-
-app.start()
-scheduler.add_job(scrape, "interval", minutes=30, next_run_time=datetime.now() + timedelta(seconds=10))
-scheduler.start()
+loop = asyncio.get_event_loop()
+# scheduler = AsyncIOScheduler(timezone="Europe/Rome", event_loop=loop)
+# scheduler.add_job(scrape, "interval", minutes=30, next_run_time=datetime.now() + timedelta(seconds=30))
+# scheduler.start()
 keep_alive()
-idle()
+app.run()
