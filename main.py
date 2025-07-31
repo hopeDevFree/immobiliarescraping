@@ -6,7 +6,6 @@ import asyncio
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
-import requests
 import psycopg2
 from keep_alive import keep_alive
 
