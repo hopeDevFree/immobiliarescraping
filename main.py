@@ -50,8 +50,9 @@ headers = {
 }
 
 
-@app.on_message()
-async def scrape_on_message(client, message):
+async def scrape(client, message):
+    await app.send_message(chat_id=5239432590, text=f"""--- Inizio scrape ---""")
+
     current_page = 0
     max_pages = 1
     while current_page < max_pages:
@@ -83,14 +84,14 @@ async def scrape_on_message(client, message):
 💲 <b>Prezzo</b>: € {price}/mese
 
 🔗 <b><i><a href={url_result}>Link</a></i></b>
-                    """)
+""")
 
         conn.commit()
 
 
 loop = asyncio.get_event_loop()
-# scheduler = AsyncIOScheduler(timezone="Europe/Rome", event_loop=loop)
-# scheduler.add_job(scrape, "interval", minutes=30, next_run_time=datetime.now() + timedelta(seconds=30))
-# scheduler.start()
+scheduler = AsyncIOScheduler(timezone="Europe/Rome", event_loop=loop)
+scheduler.add_job(scrape, "interval", minutes=10, next_run_time=datetime.now() + timedelta(seconds=30))
+scheduler.start()
 keep_alive()
 app.run()
