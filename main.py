@@ -50,7 +50,7 @@ headers = {
 }
 
 
-async def scrape(client, message):
+async def scrape():
     await app.send_message(chat_id=5239432590, text=f"""--- Inizio scrape ---""")
 
     current_page = 0
