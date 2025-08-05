@@ -1,24 +1,26 @@
+import asyncio
 import os
+from datetime import datetime, timedelta
 
 import httpx
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
-from pyrogram import Client, filters
 import psycopg2
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from dotenv import load_dotenv
+from psycopg2 import pool
+from pyrogram import Client
+
 from keep_alive import keep_alive
 
 load_dotenv()
 
-conn = psycopg2.connect(
+connection_pool = psycopg2.pool.SimpleConnectionPool(
+    1, 10,
     dbname=os.getenv("db_name"),
     user=os.getenv("db_user"),
     password=os.getenv("db_password"),
     host=os.getenv("db_host"),
     port=os.getenv("db_port")
 )
-cur = conn.cursor()
 
 insert_into_annunci = """
         INSERT INTO annunci(id)
@@ -51,42 +53,52 @@ headers = {
 
 
 async def scrape():
-    await app.send_message(chat_id=5239432590, text=f"""--- Inizio scrape ---""")
+    conn = connection_pool.getconn()
+    try:
+        cur = conn.cursor()
 
-    current_page = 0
-    max_pages = 1
-    while current_page < max_pages:
+        await app.send_message(chat_id=5239432590, text=f"""--- Inizio scrape ---""")
 
-        current_page = current_page + 1
+        current_page = 0
+        max_pages = 1
+        while current_page < max_pages:
 
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url_ricerca_case.format(current_page), headers=headers)
-            json = response.json()
+            current_page = current_page + 1
 
-        max_pages = json['maxPages']
-        for result in json['results']:
-            url_result = result['seo']['url']
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url_ricerca_case.format(current_page), headers=headers)
+                json = response.json()
 
-            if 'photo' in result['realEstate']['properties'][0]:
-                url_image = result['realEstate']['properties'][0]['photo']['urls']['medium']
-            else:
-                url_image = "https://unsplash.com/it/foto/gatto-in-bianco-e-nero-sdraiato-su-una-sedia-di-bambu-marrone-allinterno-della-stanza-gKXKBY-C-Dk"
-            price = result['realEstate']['properties'][0]['price']['value']
-            title = result['seo']['anchor']
-            id_result = result['realEstate']['id']
+            max_pages = json['maxPages']
+            for result in json['results']:
+                url_result = result['seo']['url']
 
-            cur.execute(select_from_annunci, (id_result,))
-            exists = cur.fetchone()
-            if exists is None:
-                cur.execute(insert_into_annunci, (id_result,))
-                await app.send_message(chat_id=5239432590,
-                                       text=f"""<a href={url_image}>🏠</a> <b>{title}</b>
+                if 'photo' in result['realEstate']['properties'][0]:
+                    url_image = result['realEstate']['properties'][0]['photo']['urls']['medium']
+                else:
+                    url_image = "https://unsplash.com/it/foto/gatto-in-bianco-e-nero-sdraiato-su-una-sedia-di-bambu-marrone-allinterno-della-stanza-gKXKBY-C-Dk"
+                price = result['realEstate']['properties'][0]['price']['value']
+                title = result['seo']['anchor']
+                id_result = result['realEstate']['id']
+
+                cur.execute(select_from_annunci, (id_result,))
+                exists = cur.fetchone()
+                if exists is None:
+                    cur.execute(insert_into_annunci, (id_result,))
+                    await app.send_message(chat_id=5239432590,
+                                           text=f"""<a href={url_image}>🏠</a> <b>{title}</b>
 💲 <b>Prezzo</b>: € {price}/mese
-
+    
 🔗 <b><i><a href={url_result}>Link</a></i></b>
 """)
 
-        conn.commit()
+            conn.commit()
+    except Exception as e:
+        await app.send_message(chat_id=5239432590,
+                               text=f"""Errore: {e}""")
+
+    finally:
+        connection_pool.putconn(conn)
 
 
 loop = asyncio.get_event_loop()
