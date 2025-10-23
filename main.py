@@ -23,14 +23,14 @@ connection_pool = psycopg2.pool.SimpleConnectionPool(
 )
 
 insert_into_annunci = """
-        INSERT INTO annunci(id)
-        VALUES (%s)
-    """
+                      INSERT INTO annunci(id)
+                      VALUES (%s) \
+                      """
 
-select_from_annunci = """ SELECT * 
-FROM annunci 
-WHERE id = %s
-"""
+select_from_annunci = """ SELECT *
+                          FROM annunci
+                          WHERE id = %s \
+                      """
 
 app = Client(name=os.getenv("client_name"), api_id=os.getenv("api_id"), api_hash=os.getenv("api_hash"),
              bot_token=os.getenv("bot_token"))
@@ -46,6 +46,17 @@ url_ricerca_case = ("https://www.immobiliare.it/api-next/search-list/listings/?"
                     "&pag={}"
                     "&paramsCount=8"
                     "&path=%2Fsearch-list%2F")
+
+url_ricerca_stanze = ("https://www.immobiliare.it/api-next/search-list/listings/?"
+                      "raggio=50000"
+                      "&centro=40.84721%2C14.28198"
+                      "&idContratto=2"
+                      "&idCategoria=4"
+                      "&prezzoMassimo=300"
+                      "&__lang=it"
+                      "&pag={}"
+                      "&paramsCount=8"
+                      "&path=%2Fsearch-list%2F")
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'
@@ -76,7 +87,7 @@ async def scrape():
                 if 'photo' in result['realEstate']['properties'][0]:
                     url_image = result['realEstate']['properties'][0]['photo']['urls']['medium']
                 else:
-                    url_image = "https://unsplash.com/it/foto/gatto-in-bianco-e-nero-sdraiato-su-una-sedia-di-bambu-marrone-allinterno-della-stanza-gKXKBY-C-Dk"
+                    url_image = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1143"
                 price = result['realEstate']['properties'][0]['price']['value']
                 title = result['seo']['anchor']
                 id_result = result['realEstate']['id']
@@ -91,6 +102,56 @@ async def scrape():
     
 🔗 <b><i><a href={url_result}>Link</a></i></b>
 """)
+
+            conn.commit()
+    except Exception as e:
+        await app.send_message(chat_id=5239432590,
+                               text=f"""Errore: {e}""")
+
+    finally:
+        connection_pool.putconn(conn)
+
+    conn = connection_pool.getconn()
+    try:
+        cur = conn.cursor()
+
+        await app.send_message(chat_id=5602009143, text=f"""--- Inizio scrape (sei carina) ---""")
+
+        current_page = 0
+        max_pages = 1
+        while current_page < max_pages:
+
+            current_page = current_page + 1
+
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url_ricerca_stanze.format(current_page), headers=headers)
+                json = response.json()
+
+            max_pages = json['maxPages']
+            for result in json['results']:
+                url_result = result['seo']['url']
+
+                if 'photo' in result['realEstate']['properties'][0]:
+                    url_image = result['realEstate']['properties'][0]['photo']['urls']['medium']
+                else:
+                    url_image = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1143"
+                price = result['realEstate']['properties'][0]['price']['value']
+                title = result['seo']['anchor']
+                id_result = result['realEstate']['id']
+
+                cur.execute(select_from_annunci, (id_result,))
+                exists = cur.fetchone()
+                if exists is None:
+                    cur.execute(insert_into_annunci, (id_result,))
+                    await app.send_message(chat_id=5602009143,
+                                           text=f"""<a href={url_image}>🏠</a> <b>{title}</b>
+💲 <b>Prezzo</b>: € {price}/mese
+
+🔗 <b><i><a href={url_result}>Link</a></i></b>
+    
+❤️ <b>ricordati che sei bona</b>
+    """)
+                    await asyncio.sleep(0.5)
 
             conn.commit()
     except Exception as e:
