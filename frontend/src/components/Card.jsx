@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRightIcon,
   CloseIcon,
+  ExternalLinkIcon,
   HeartFilledIcon,
   HomeIcon,
   LayoutIcon,
   MapPinIcon,
   PhotoStackIcon,
   RulerIcon,
+  StarIcon,
 } from './Icons'
 import ImageCarousel from './ImageCarousel'
 import {
@@ -17,6 +19,7 @@ import {
   getListingLayoutLabel,
   getListingLocationLine,
   getListingPrimaryArea,
+  getListingSourceLabel,
   getListingSurfaceLabel,
   getListingTitle,
 } from '../utils/listings'
@@ -58,20 +61,29 @@ function getEyebrow(annuncio) {
     .join(' / ')
 }
 
-function getFloorLabel(annuncio) {
+function getDetailFact(annuncio) {
   const rawText = `${annuncio?.titolo || ''} ${annuncio?.descrizione || ''}`
   const floorMatch = rawText.match(/(\d{1,2})\s*(?:\u00B0|\u00BA)?\s*piano/i)
 
   if (floorMatch) {
-    return `${floorMatch[1]}\u00B0 Piano`
+    return {
+      label: `${floorMatch[1]}\u00B0 piano`,
+      Icon: HomeIcon,
+    }
   }
 
   const distanceLabel = formatDistanceKm(annuncio?.distance_km)
   if (distanceLabel) {
-    return distanceLabel
+    return {
+      label: distanceLabel,
+      Icon: MapPinIcon,
+    }
   }
 
-  return 'Piano alto'
+  return {
+    label: getListingSourceLabel(annuncio?.url),
+    Icon: ExternalLinkIcon,
+  }
 }
 
 export default function Card({
@@ -88,7 +100,9 @@ export default function Card({
   const layoutLabel = getListingLayoutLabel(annuncio)
   const surfaceLabel = getListingSurfaceLabel(annuncio) || `${annuncio?.superficie || '--'} mq`
   const roomsLabel = annuncio?.stanze ? `${annuncio.stanze} Locali` : layoutLabel
-  const floorLabel = getFloorLabel(annuncio)
+  const sourceLabel = getListingSourceLabel(annuncio?.url)
+  const detailFact = getDetailFact(annuncio)
+  const DetailFactIcon = detailFact.Icon
   const photoCount = Math.max(images.length, 1)
   const [drag, setDrag] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -270,7 +284,7 @@ export default function Card({
             <span className="listing-showcase__segment-pill listing-showcase__segment-pill--active">
               {getDealLabel(annuncio)}
             </span>
-            <span className="listing-showcase__segment-pill">Nuovo annuncio</span>
+            <span className="listing-showcase__segment-pill">{sourceLabel}</span>
           </div>
 
           <ImageCarousel
@@ -315,8 +329,8 @@ export default function Card({
               {roomsLabel}
             </span>
             <span className="listing-showcase__fact">
-              <HomeIcon />
-              {floorLabel}
+              <DetailFactIcon />
+              {detailFact.label}
             </span>
           </div>
 
@@ -329,6 +343,16 @@ export default function Card({
             >
               <CloseIcon />
               Scarta
+            </button>
+
+            <button
+              type="button"
+              className="listing-showcase__action listing-showcase__action--super"
+              onClick={onSuperLike}
+              disabled={busy}
+            >
+              <StarIcon />
+              Super like
             </button>
 
             <button
@@ -348,7 +372,7 @@ export default function Card({
             rel="noreferrer"
             className="listing-showcase__cta"
           >
-            <span>Vedi dettagli</span>
+            <span>Apri su {sourceLabel}</span>
             <ChevronRightIcon />
           </a>
         </div>

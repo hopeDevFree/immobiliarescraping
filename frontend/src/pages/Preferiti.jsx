@@ -12,7 +12,15 @@ import {
   getListingSourceLabel,
   getListingTitle,
 } from '../utils/listings'
-import { API_BASE_URL, getApiErrorMessage } from '../utils/api'
+import {
+  API_BASE_URL,
+  clearUserSession,
+  getApiErrorMessage,
+  getStoredUser,
+  hasAuthenticatedSession,
+  isUnauthorizedError,
+  withAuth,
+} from '../utils/api'
 
 const API = API_BASE_URL
 
@@ -37,10 +45,10 @@ export default function Preferiti() {
   const [filterMode, setFilterMode] = useState('all')
   const [sortMode, setSortMode] = useState('feed')
   const navigate = useNavigate()
-  const [utente] = useState(() => JSON.parse(localStorage.getItem('utente') || 'null'))
+  const [utente] = useState(getStoredUser)
 
   useEffect(() => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       navigate('/')
       return
     }
@@ -50,9 +58,15 @@ export default function Preferiti() {
       setError('')
 
       try {
-        const res = await axios.get(`${API}/preferiti`, { params: { utente_id: utente.id } })
+        const res = await axios.get(`${API}/preferiti`, withAuth({}, utente))
         setPreferiti(res.data)
       } catch (error) {
+        if (isUnauthorizedError(error)) {
+          clearUserSession()
+          navigate('/')
+          return
+        }
+
         setError(getApiErrorMessage(error))
       } finally {
         setLoading(false)
@@ -66,9 +80,15 @@ export default function Preferiti() {
     setBusyId(id)
 
     try {
-      await axios.delete(`${API}/preferiti/${id}`, { params: { utente_id: utente.id } })
+      await axios.delete(`${API}/preferiti/${id}`, withAuth({}, utente))
       setPreferiti((current) => current.filter((preferito) => preferito.id !== id))
     } catch (error) {
+      if (isUnauthorizedError(error)) {
+        clearUserSession()
+        navigate('/')
+        return
+      }
+
       setError(getApiErrorMessage(error))
     } finally {
       setBusyId(null)

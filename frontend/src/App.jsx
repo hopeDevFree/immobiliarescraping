@@ -10,7 +10,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/swipe" element={<Swipe />} />
-      <Route path="/cerca" element={<Swipe />} />
+      <Route path="/cerca" element={<Navigate to="/swipe" replace />} />
       <Route path="/preferiti" element={<Preferiti />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="*" element={<Navigate to="/" />} />

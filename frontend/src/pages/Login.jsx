@@ -1,9 +1,19 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import ThemeToggle from '../components/ThemeToggle'
 import { CompassIcon, HeartIcon, MapPinIcon, SearchIcon, ShieldIcon } from '../components/Icons'
-import { API_BASE_URL, getApiDisplayUrl, getApiErrorMessage } from '../utils/api'
+import {
+  API_BASE_URL,
+  getApiDisplayUrl,
+  getApiErrorMessage,
+  getLegacyUserId,
+  getStoredAuthToken,
+  getStoredUser,
+  hasAuthenticatedSession,
+  storeUserSession,
+} from '../utils/api'
 
 const API = API_BASE_URL
 const LAST_USERNAME_STORAGE_KEY = 'casinder-last-username'
@@ -11,7 +21,7 @@ const LAST_USERNAME_STORAGE_KEY = 'casinder-last-username'
 const TRUST_HIGHLIGHTS = [
   {
     title: 'Feed piu leggibile',
-    text: 'Scorri solo annunci gia ripuliti e pronti da confrontare.',
+    text: 'Scorri solo annunci ripuliti e pronti da confrontare.',
     icon: SearchIcon,
   },
   {
@@ -46,7 +56,14 @@ export default function Login() {
   const [username, setUsername] = useState(getInitialUsername)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [storedUser] = useState(getStoredUser)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (hasAuthenticatedSession(storedUser)) {
+      navigate('/swipe')
+    }
+  }, [navigate, storedUser])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -60,8 +77,16 @@ export default function Login() {
     setError('')
 
     try {
-      const res = await axios.post(`${API}/utenti/login`, { username: normalizedUsername })
-      localStorage.setItem('utente', JSON.stringify(res.data))
+      const storedUsername = String(storedUser?.username || '').trim()
+      const sameStoredUsername = storedUsername === normalizedUsername
+      const authToken = sameStoredUsername ? getStoredAuthToken(storedUser) : ''
+      const legacyUserId = sameStoredUsername && !authToken ? getLegacyUserId(storedUser) : null
+      const res = await axios.post(`${API}/utenti/login`, {
+        username: normalizedUsername,
+        auth_token: authToken || null,
+        legacy_user_id: legacyUserId,
+      })
+      storeUserSession(res.data)
       localStorage.setItem(LAST_USERNAME_STORAGE_KEY, normalizedUsername)
       navigate('/swipe')
     } catch (requestError) {
@@ -108,19 +133,19 @@ export default function Login() {
                   <div className="auth-preview__media">
                     <div className="auth-preview__pill-group">
                       <span className="auth-preview__pill auth-preview__pill--active">Affitto</span>
-                      <span className="auth-preview__pill">Nuovo</span>
+                      <span className="auth-preview__pill">Arredato</span>
                     </div>
                   </div>
 
                   <div className="auth-preview__body">
-                    <span className="auth-preview__meta">TRILOCALE / BRERA</span>
+                    <span className="auth-preview__meta">BILOCALE / VOMERO</span>
                     <div className="auth-preview__headline">
-                      <strong>Attico in Brera</strong>
-                      <span>EUR 750.000</span>
+                      <strong>Bilocale arredato</strong>
+                      <span>EUR 830 / mese</span>
                     </div>
                     <div className="auth-preview__location">
                       <MapPinIcon />
-                      Milano, Via Solferino
+                      Napoli, Via Luca Giordano
                     </div>
                   </div>
                 </div>

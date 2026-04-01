@@ -4,7 +4,14 @@ import axios from 'axios'
 import AppShell from '../components/AppShell'
 import { HeartIcon, HomeIcon, LogOutIcon, UserIcon } from '../components/Icons'
 import { formatMonthlyPrice } from '../utils/listings'
-import { API_BASE_URL } from '../utils/api'
+import {
+  API_BASE_URL,
+  clearUserSession,
+  getStoredUser,
+  hasAuthenticatedSession,
+  isUnauthorizedError,
+  withAuth,
+} from '../utils/api'
 
 const API = API_BASE_URL
 const FILTERS_STORAGE_KEY = 'casinder-swipe-filters'
@@ -59,13 +66,13 @@ function getTopLabel(items) {
 
 export default function Profile() {
   const navigate = useNavigate()
-  const [utente] = useState(() => JSON.parse(localStorage.getItem('utente') || 'null'))
+  const [utente] = useState(getStoredUser)
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
   const savedFilters = useMemo(readStoredFilters, [])
 
   useEffect(() => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       navigate('/')
       return
     }
@@ -74,9 +81,15 @@ export default function Profile() {
       setLoading(true)
 
       try {
-        const res = await axios.get(`${API}/preferiti`, { params: { utente_id: utente.id } })
+        const res = await axios.get(`${API}/preferiti`, withAuth({}, utente))
         setFavorites(res.data)
-      } catch {
+      } catch (error) {
+        if (isUnauthorizedError(error)) {
+          clearUserSession()
+          navigate('/')
+          return
+        }
+
         setFavorites([])
       } finally {
         setLoading(false)
@@ -87,7 +100,7 @@ export default function Profile() {
   }, [navigate, utente])
 
   function handleLogout() {
-    localStorage.removeItem('utente')
+    clearUserSession()
     navigate('/')
   }
 

@@ -1,3 +1,5 @@
+const USER_STORAGE_KEY = 'utente'
+
 function trimTrailingSlash(value) {
   return String(value || '').replace(/\/+$/, '')
 }
@@ -12,6 +14,14 @@ function isPrivateIpv4(hostname) {
 
 function buildOriginLike(url, hostname) {
   return `${url.protocol}//${hostname}${url.port ? `:${url.port}` : ''}`
+}
+
+function parseStoredJson(value) {
+  try {
+    return JSON.parse(value || 'null')
+  } catch {
+    return null
+  }
 }
 
 export function resolveApiBaseUrl(configuredValue = import.meta.env.VITE_API_URL) {
@@ -53,12 +63,86 @@ export function getApiDisplayUrl() {
   return API_BASE_URL || trimTrailingSlash(import.meta.env.VITE_API_URL) || 'URL API non configurato'
 }
 
+export function getStoredUser() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const parsed = parseStoredJson(window.localStorage.getItem(USER_STORAGE_KEY))
+  return parsed && typeof parsed === 'object' ? parsed : null
+}
+
+export function getStoredAuthToken(user = getStoredUser()) {
+  return typeof user?.auth_token === 'string' ? user.auth_token.trim() : ''
+}
+
+export function getLegacyUserId(user = getStoredUser()) {
+  const legacyUserId = Number(user?.id)
+  return Number.isInteger(legacyUserId) && legacyUserId > 0 ? legacyUserId : null
+}
+
+export function hasAuthenticatedSession(user = getStoredUser()) {
+  return Boolean(getStoredAuthToken(user))
+}
+
+export function storeUserSession(user) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+}
+
+export function clearUserSession() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.removeItem(USER_STORAGE_KEY)
+}
+
+export function isUnauthorizedError(error) {
+  return error?.response?.status === 401
+}
+
+export function getAuthHeaders(user = getStoredUser()) {
+  const authToken = getStoredAuthToken(user)
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {}
+}
+
+export function withAuth(config = {}, user = getStoredUser()) {
+  const headers = {
+    ...getAuthHeaders(user),
+    ...(config.headers || {}),
+  }
+
+  if (Object.keys(headers).length === 0) {
+    return config
+  }
+
+  return {
+    ...config,
+    headers,
+  }
+}
+
 export function getApiErrorMessage(error) {
-  if (error?.response?.status === 404) {
+  const statusCode = error?.response?.status
+  const detail = error?.response?.data?.detail
+
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+
+  if (statusCode === 401) {
+    return 'La sessione non e piu valida. Rientra per continuare.'
+  }
+
+  if (statusCode === 404) {
     return "Il servizio risponde, ma l'endpoint richiesto non esiste."
   }
 
-  if (error?.response?.status >= 500) {
+  if (statusCode >= 500) {
     return 'Il backend ha risposto con un errore interno. Riprova tra poco.'
   }
 

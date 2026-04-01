@@ -253,7 +253,8 @@ async def fetch_detail_description(client, annuncio_id, page_headers, detail_hea
         build_id = await fetch_next_build_id(client, page_headers=page_headers)
     except RateLimitError:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.warning("Impossibile ricavare il buildId per l'annuncio %s: %s", annuncio_id, exc)
         return ""
 
     detail_url = f"https://www.immobiliare.it/_next/data/{build_id}/annunci/{annuncio_id}.json"
@@ -265,7 +266,12 @@ async def fetch_detail_description(client, annuncio_id, page_headers, detail_hea
             build_id = await fetch_next_build_id(client, page_headers=page_headers, force_refresh=True)
         except RateLimitError:
             raise
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Refresh buildId non riuscito per l'annuncio %s dopo 404 sul dettaglio: %s",
+                annuncio_id,
+                exc,
+            )
             return ""
 
         detail_url = f"https://www.immobiliare.it/_next/data/{build_id}/annunci/{annuncio_id}.json"
@@ -341,6 +347,7 @@ async def scrape():
                         max_pages = data.get("maxPages", 1)
 
                         for result in data.get("results", []):
+                            id_annuncio = None
                             try:
                                 props = result["realEstate"]["properties"][0]
                                 id_annuncio = result["realEstate"]["id"]
@@ -437,7 +444,13 @@ async def scrape():
                                 nuovi += 1
                             except RateLimitError:
                                 raise
-                            except Exception:
+                            except Exception as exc:
+                                logger.warning(
+                                    "Salto annuncio %s della ricerca %s per errore di parsing: %s",
+                                    id_annuncio or "sconosciuto",
+                                    ricerca["tipo"],
+                                    exc,
+                                )
                                 continue
         except RateLimitError as exc:
             logger.critical("Scraping interrotto per rate limit (HTTP 429): %s", exc)

@@ -8,19 +8,26 @@ import LocationSheet from '../components/LocationSheet'
 import {
   CloseIcon,
   MapPinIcon,
-  PdfIcon,
   RefreshIcon,
   SearchIcon,
-  TrainIcon,
-  TreeIcon,
   UserIcon,
 } from '../components/Icons'
 import {
+  formatDistanceKm,
   formatMonthlyPrice,
+  getListingDescription,
   getListingLocationLine,
   getListingPrimaryArea,
+  getListingSourceLabel,
 } from '../utils/listings'
-import { API_BASE_URL } from '../utils/api'
+import {
+  API_BASE_URL,
+  clearUserSession,
+  getStoredUser,
+  hasAuthenticatedSession,
+  isUnauthorizedError,
+  withAuth,
+} from '../utils/api'
 
 const API = API_BASE_URL
 const FILTERS_STORAGE_KEY = 'casinder-swipe-filters'
@@ -157,9 +164,8 @@ function getLocationDraftFromFilters(filters) {
   }
 }
 
-function buildListingParams(utenteId, filters) {
+function buildListingParams(filters) {
   const params = {
-    utente_id: utenteId,
     tipo: filters.tipo,
   }
 
@@ -222,14 +228,6 @@ function countActiveFilters(filters) {
   return listingFilterCount + locationFilterCount
 }
 
-function getLocationSummary(filters) {
-  if (filters.locationKind === 'zone' && filters.locationLabel) {
-    return `Entro ${filters.radiusKm} km da ${filters.locationLabel}`
-  }
-
-  return 'Vista estesa su tutta Napoli'
-}
-
 function shouldReduceWarmup() {
   if (typeof window === 'undefined') {
     return false
@@ -262,14 +260,6 @@ function preloadListingImages(listing, limit = 2) {
   })
 }
 
-function getShowcaseAreaLabel(annuncio, filters) {
-  if (annuncio) {
-    return getListingPrimaryArea(annuncio) || filters.locationLabel
-  }
-
-  return filters.locationLabel
-}
-
 function getShowcaseLocationText(annuncio, filters) {
   if (annuncio) {
     return getListingLocationLine(annuncio)
@@ -284,38 +274,68 @@ function getShowcaseLocationText(annuncio, filters) {
 
 function getShowcaseSummary(filters, locationsLoading) {
   if (locationsLoading) {
-    return 'Sto preparando le zone piu interessanti per te.'
+    return 'Sto preparando le zone piu utili per questo feed.'
   }
 
   if (filters.locationKind === 'zone') {
-    return `Feed ristretto entro ${filters.radiusKm} km da ${filters.locationLabel}.`
+    return `Ti mostro un annuncio alla volta entro ${filters.radiusKm} km da ${filters.locationLabel}.`
   }
 
-  return 'Una selezione ordinata per iniziare da subito senza rumore.'
+  return 'Ti mostro un annuncio alla volta in base a tipo, budget e preferenze.'
 }
 
-function getNearbyServices(areaLabel, filters) {
+function truncateText(value, maxLength = 220) {
+  const normalized = String(value || '').trim()
+  if (!normalized) {
+    return ''
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized
+  }
+
+  return `${normalized.slice(0, maxLength).trimEnd()}...`
+}
+
+function getCoverageLabel(annuncio, filters) {
+  const distanceLabel = formatDistanceKm(annuncio?.distance_km)
+  if (distanceLabel) {
+    return distanceLabel
+  }
+
+  if (filters.locationKind === 'zone') {
+    return `Entro ${filters.radiusKm} km`
+  }
+
+  return 'Tutta Napoli'
+}
+
+function getSupportFacts(annuncio, filters, activeFilterCount) {
+  const areaLabel = getListingPrimaryArea(annuncio) || annuncio?.zona || filters.locationLabel
+  const sourceLabel = getListingSourceLabel(annuncio?.url)
+
   return [
     {
-      key: 'transport',
-      eyebrow: 'Trasporti',
-      title: areaLabel || filters.locationLabel,
-      time: `${Math.max(3, Number(filters.radiusKm) + 1)} min`,
-      Icon: TrainIcon,
+      key: 'area',
+      label: 'Zona',
+      value: areaLabel || 'Napoli',
     },
     {
-      key: 'green',
-      eyebrow: 'Verde',
-      title: filters.locationKind === 'zone' ? 'Area intorno a te' : 'Spazi aperti',
-      time: `${Math.max(6, Number(filters.radiusKm) + 3)} min`,
-      Icon: TreeIcon,
+      key: 'source',
+      label: 'Portale',
+      value: sourceLabel,
+    },
+    {
+      key: 'coverage',
+      label: 'Copertura',
+      value: getCoverageLabel(annuncio, filters),
+    },
+    {
+      key: 'filters',
+      label: 'Filtri',
+      value: activeFilterCount > 0 ? `${activeFilterCount} attivi` : 'Solo feed base',
     },
   ]
-}
-
-function getMarketDelta(annuncio) {
-  const seed = Number(annuncio?.id || 42)
-  return `+${(((seed % 15) + 35) / 10).toFixed(1)}%`
 }
 
 export default function Swipe() {
@@ -337,7 +357,7 @@ export default function Swipe() {
   const [livyoMessageEvent, setLivyoMessageEvent] = useState(null)
   const [toast, setToast] = useState({ visible: false, tone: 'like', message: '' })
   const [reduceWarmup] = useState(() => shouldReduceWarmup())
-  const [utente] = useState(() => JSON.parse(localStorage.getItem('utente') || 'null'))
+  const [utente] = useState(getStoredUser)
   const toastTimeoutRef = useRef(null)
   const livyoEventIdRef = useRef(0)
   const prefetchedListingRef = useRef(null)
@@ -345,6 +365,11 @@ export default function Swipe() {
   const prefetchRequestRef = useRef(0)
   const prefetchTimerRef = useRef(null)
   const navigate = useNavigate()
+
+  const handleAuthFailure = useCallback(() => {
+    clearUserSession()
+    navigate('/')
+  }, [navigate])
 
   const showToast = useCallback((action) => {
     const toastByAction = {
@@ -400,21 +425,21 @@ export default function Swipe() {
   }, [])
 
   const fetchListing = useCallback(async (filtersToUse, excludeIds = []) => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       return null
     }
 
-    const params = buildListingParams(utente.id, filtersToUse)
+    const params = buildListingParams(filtersToUse)
     if (excludeIds.length > 0) {
       params.exclude_ids = excludeIds.join(',')
     }
 
-    const res = await axios.get(`${API}/annunci/prossimo`, { params })
+    const res = await axios.get(`${API}/annunci/prossimo`, withAuth({ params }, utente))
     return res.data
   }, [utente])
 
   const primeNextListing = useCallback(async (filtersToUse, currentListing, requestVersion) => {
-    if (!currentListing || !utente) {
+    if (!currentListing || !hasAuthenticatedSession(utente)) {
       prefetchedListingRef.current = null
       return
     }
@@ -432,12 +457,17 @@ export default function Swipe() {
       if (nextListing && !reduceWarmup) {
         preloadListingImages(nextListing, 1)
       }
-    } catch {
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        handleAuthFailure()
+        return
+      }
+
       if (requestVersionRef.current === requestVersion && prefetchRequestRef.current === prefetchId) {
         prefetchedListingRef.current = null
       }
     }
-  }, [fetchListing, reduceWarmup, utente])
+  }, [fetchListing, handleAuthFailure, reduceWarmup, utente])
 
   const clearScheduledPrefetch = useCallback(() => {
     if (prefetchTimerRef.current) {
@@ -449,7 +479,7 @@ export default function Swipe() {
   const scheduleNextListingPrefetch = useCallback((filtersToUse, currentListing, requestVersion) => {
     clearScheduledPrefetch()
 
-    if (!currentListing || !utente) {
+    if (!currentListing || !hasAuthenticatedSession(utente)) {
       prefetchedListingRef.current = null
       return
     }
@@ -471,7 +501,7 @@ export default function Swipe() {
   }, [clearScheduledPrefetch, primeNextListing, reduceWarmup, utente])
 
   const loadCurrentListing = useCallback(async (filtersToUse, { showLoading = true } = {}) => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       return
     }
 
@@ -507,15 +537,27 @@ export default function Swipe() {
       setAnnuncio(nextListing)
       setStato('ready')
       scheduleNextListingPrefetch(filtersToUse, nextListing, requestVersion)
-    } catch {
+    } catch (error) {
       if (requestVersionRef.current !== requestVersion) {
+        return
+      }
+
+      if (isUnauthorizedError(error)) {
+        handleAuthFailure()
         return
       }
 
       setAnnuncio(null)
       setStato('error')
     }
-  }, [clearScheduledPrefetch, fetchListing, reduceWarmup, scheduleNextListingPrefetch, utente])
+  }, [
+    clearScheduledPrefetch,
+    fetchListing,
+    handleAuthFailure,
+    reduceWarmup,
+    scheduleNextListingPrefetch,
+    utente,
+  ])
 
   const caricaProssimo = useCallback(async (options = {}) => {
     await loadCurrentListing(options.filtersToUse ?? filters, {
@@ -534,9 +576,7 @@ export default function Swipe() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 180))
-      await axios.post(`${API}/annunci/${annuncio.id}/${action}`, null, {
-        params: { utente_id: utente.id },
-      })
+      await axios.post(`${API}/annunci/${annuncio.id}/${action}`, null, withAuth({}, utente))
 
       showToast(action)
       emitLivyoSwipeEvent(action)
@@ -555,7 +595,12 @@ export default function Swipe() {
       } else {
         await caricaProssimo({ showLoading: false })
       }
-    } catch {
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        handleAuthFailure()
+        return
+      }
+
       setFeedback("Non sono riuscito ad aggiornare l'annuncio. Riprova.")
       emitLivyoMessageEvent('Non riesco a salvare questa azione adesso.')
     } finally {
@@ -569,6 +614,7 @@ export default function Swipe() {
     emitLivyoMessageEvent,
     emitLivyoSwipeEvent,
     filters,
+    handleAuthFailure,
     reduceWarmup,
     scheduleNextListingPrefetch,
     showToast,
@@ -648,7 +694,7 @@ export default function Swipe() {
   }
 
   useEffect(() => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       navigate('/')
       return
     }
@@ -665,7 +711,7 @@ export default function Swipe() {
   }, [filters])
 
   useEffect(() => {
-    if (!utente) {
+    if (!hasAuthenticatedSession(utente)) {
       return
     }
 
@@ -676,15 +722,22 @@ export default function Swipe() {
       setLocationsError('')
 
       try {
-        const res = await axios.get(`${API}/posizioni`)
+        const res = await axios.get(`${API}/posizioni`, withAuth({
+          params: { tipo: filters.tipo },
+        }, utente))
         if (cancelled) {
           return
         }
 
         const nextPositions = Array.isArray(res.data) && res.data.length > 0 ? res.data : FALLBACK_POSITIONS
         setPositions(nextPositions)
-      } catch {
+      } catch (error) {
         if (!cancelled) {
+          if (isUnauthorizedError(error)) {
+            handleAuthFailure()
+            return
+          }
+
           setPositions(FALLBACK_POSITIONS)
           setLocationsError('Non sono riuscito a caricare le zone disponibili.')
         }
@@ -700,7 +753,7 @@ export default function Swipe() {
     return () => {
       cancelled = true
     }
-  }, [utente])
+  }, [filters.tipo, handleAuthFailure, utente])
 
   useEffect(() => {
     function handleKeyboardShortcuts(event) {
@@ -782,15 +835,16 @@ export default function Swipe() {
   const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters])
   const priceOptions = useMemo(() => getPriceOptions(draftFilters.tipo), [draftFilters.tipo])
   const surfaceOptions = useMemo(() => getSurfaceOptions(draftFilters.tipo), [draftFilters.tipo])
-  const locationSummary = useMemo(() => getLocationSummary(filters), [filters])
-  const showcaseAreaLabel = useMemo(() => getShowcaseAreaLabel(annuncio, filters), [annuncio, filters])
   const showcaseLocationText = useMemo(() => getShowcaseLocationText(annuncio, filters), [annuncio, filters])
   const showcaseSummary = useMemo(() => getShowcaseSummary(filters, locationsLoading), [filters, locationsLoading])
-  const nearbyServices = useMemo(
-    () => getNearbyServices(showcaseAreaLabel, filters),
-    [filters, showcaseAreaLabel],
+  const supportFacts = useMemo(
+    () => (annuncio ? getSupportFacts(annuncio, filters, activeFilterCount) : []),
+    [activeFilterCount, annuncio, filters],
   )
-  const marketDelta = useMemo(() => getMarketDelta(annuncio), [annuncio])
+  const descriptionSnippet = useMemo(
+    () => truncateText(getListingDescription(annuncio), 210),
+    [annuncio],
+  )
   const avatarLabel = useMemo(
     () => String(utente?.username || '').trim().charAt(0).toUpperCase() || null,
     [utente],
@@ -836,12 +890,12 @@ export default function Swipe() {
         <section className="showcase-panel">
           <header className="showcase-panel__header">
             <div>
-              <h1 className="showcase-panel__title">Consigliati per te</h1>
+              <h1 className="showcase-panel__title">Un annuncio alla volta</h1>
               <p className="showcase-panel__subtitle">{showcaseSummary}</p>
             </div>
 
             <button type="button" className="showcase-link" onClick={openFilters}>
-              Vedi tutti
+              Apri filtri
             </button>
           </header>
 
@@ -913,63 +967,38 @@ export default function Swipe() {
         </section>
 
         {stato === 'ready' && annuncio && (
-          <>
-            <section className="showcase-section-card">
-              <header className="showcase-section-card__header">
-                <h2 className="showcase-section-card__title">Zona e servizi</h2>
-                <button type="button" className="showcase-link showcase-link--with-icon" onClick={openLocationSheet}>
-                  Vedi mappa
-                  <MapPinIcon />
-                </button>
-              </header>
-
-              <div className="showcase-map">
-                <div className="showcase-map__grid" aria-hidden="true" />
-                <div className="showcase-map__badge">
-                  <span className="showcase-map__badge-dot" />
-                  Servizi nelle vicinanze
-                </div>
+          <section className="showcase-support-card">
+            <header className="showcase-support-card__header">
+              <div>
+                <span className="showcase-support-card__eyebrow">Contesto reale</span>
+                <h2 className="showcase-support-card__title">Perche lo stai vedendo</h2>
               </div>
 
-              <div className="showcase-service-grid">
-                {nearbyServices.map(({ key, eyebrow, title, time, Icon }) => (
-                  <article key={key} className="showcase-service-card">
-                    <div className="showcase-service-card__icon">
-                      <Icon />
-                    </div>
+              <button type="button" className="showcase-link showcase-link--with-icon" onClick={openFilters}>
+                Apri filtri
+                <SearchIcon />
+              </button>
+            </header>
 
-                    <div className="showcase-service-card__copy">
-                      <span className="showcase-service-card__eyebrow">{eyebrow}</span>
-                      <strong>{title}</strong>
-                      <small>{time}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+            <div className="showcase-support-grid">
+              {supportFacts.map((item) => (
+                <article key={item.key} className="showcase-support-stat">
+                  <span className="showcase-support-stat__label">{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
 
-            <section className="showcase-market-card">
-              <div className="showcase-market-card__content">
-                <div className="showcase-market-card__meta">
-                  <span className="showcase-market-card__pill">Mercato</span>
-                  <strong>{marketDelta}</strong>
-                </div>
+            {descriptionSnippet && (
+              <p className="showcase-support-copy">{descriptionSnippet}</p>
+            )}
 
-                <h2>{showcaseAreaLabel || locationSummary}</h2>
-                <p>Trend di zona in crescita nell'ultimo semestre.</p>
-              </div>
-
-              <a
-                href={annuncio.url}
-                target="_blank"
-                rel="noreferrer"
-                className="showcase-market-card__button"
-              >
-                <PdfIcon />
-                PDF
-              </a>
-            </section>
-          </>
+            <div className="showcase-support-tips">
+              <span>Sinistra: scarta</span>
+              <span>Su: super like</span>
+              <span>Destra: salva</span>
+            </div>
+          </section>
         )}
 
         {showFilters && (

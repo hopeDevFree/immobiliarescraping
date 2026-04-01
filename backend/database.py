@@ -112,6 +112,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS utenti (
                 id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
+                auth_token_hash TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
             )
         """)
@@ -151,6 +152,7 @@ def init_db():
         ensure_column(cur, "annunci", "tipo", "TEXT")
         ensure_column(cur, "annunci", "created_at", "TIMESTAMP DEFAULT NOW()")
         ensure_column(cur, "annunci", "updated_at", "TIMESTAMP DEFAULT NOW()")
+        ensure_column(cur, "utenti", "auth_token_hash", "TEXT")
         ensure_column(cur, "utenti", "created_at", "TIMESTAMP DEFAULT NOW()")
         ensure_column(cur, "preferiti", "decision", "TEXT DEFAULT 'like'")
         ensure_column(cur, "preferiti", "created_at", "TIMESTAMP DEFAULT NOW()")
@@ -166,6 +168,11 @@ def init_db():
         cur.execute("ALTER TABLE utenti ALTER COLUMN created_at SET DEFAULT NOW()")
         cur.execute("ALTER TABLE preferiti ALTER COLUMN decision SET DEFAULT 'like'")
         cur.execute("ALTER TABLE preferiti ALTER COLUMN created_at SET DEFAULT NOW()")
+        cur.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_utenti_auth_token_hash
+            ON utenti (auth_token_hash)
+            WHERE auth_token_hash IS NOT NULL
+        """)
         cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_annunci_tipo_created_at_valid
             ON annunci (tipo, created_at DESC)

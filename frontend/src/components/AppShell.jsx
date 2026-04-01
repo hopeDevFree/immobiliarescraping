@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { CompassIcon, HeartIcon, SearchIcon, UserIcon } from './Icons'
+import { CompassIcon, HeartIcon, UserIcon } from './Icons'
 import ThemeToggle from './ThemeToggle'
 
 const navItems = [
   { to: '/swipe', label: 'Scopri', icon: CompassIcon },
   { to: '/preferiti', label: 'Salvati', icon: HeartIcon },
-  { to: '/cerca', label: 'Cerca', icon: SearchIcon },
   { to: '/profile', label: 'Profilo', icon: UserIcon },
 ]
 

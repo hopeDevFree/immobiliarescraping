@@ -1,16 +1,22 @@
 import asyncio
+import hashlib
+import logging
 import re
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from psycopg2.extras import RealDictCursor
 
 from database import get_conn, put_conn, init_db
 from scraper import fetch_detail_description_for_listing, scrape, should_refresh_description
+
+logger = logging.getLogger(__name__)
+SUPPORTED_LISTING_TYPES = {"casa", "stanza"}
 
 
 @asynccontextmanager
@@ -40,7 +46,8 @@ def ensure_full_description(cur, annuncio_id, descrizione):
 
     try:
         refreshed_description = asyncio.run(fetch_detail_description_for_listing(annuncio_id))
-    except Exception:
+    except Exception as exc:
+        logger.warning("Refresh descrizione non riuscito per annuncio %s: %s", annuncio_id, exc)
         return normalized_description
 
     if not refreshed_description:
@@ -56,7 +63,8 @@ def ensure_full_description(cur, annuncio_id, descrizione):
 def refresh_description_in_background(annuncio_id: int):
     try:
         refreshed_description = asyncio.run(fetch_detail_description_for_listing(annuncio_id))
-    except Exception:
+    except Exception as exc:
+        logger.warning("Refresh descrizione in background fallito per annuncio %s: %s", annuncio_id, exc)
         return
 
     if not refreshed_description:
@@ -100,6 +108,11 @@ def parse_exclude_ids(exclude_ids: str | None):
 
 
 DEFAULT_LOCATION_LABEL = "Tutta Napoli"
+AUTH_ERROR_MESSAGE = "Sessione non valida. Rientra per continuare."
+USERNAME_CONFLICT_MESSAGE = (
+    "Questo username e gia associato a un'altra sessione locale. "
+    "Usa lo stesso dispositivo oppure scegline un altro."
+)
 
 
 def build_distance_expression(table_alias: str):
@@ -167,24 +180,130 @@ def slugify_label(value: str):
     return normalized or "posizione"
 
 
+def normalize_listing_type(value: str | None):
+    normalized = str(value or "casa").strip().lower()
+    return normalized if normalized in SUPPORTED_LISTING_TYPES else "casa"
+
+
+def hash_auth_token(token: str):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def issue_auth_token():
+    return secrets.token_urlsafe(32)
+
+
+def extract_bearer_token(authorization: str | None):
+    if not authorization:
+        return ""
+
+    scheme, _, value = authorization.partition(" ")
+    if scheme.lower() != "bearer":
+        return ""
+
+    return value.strip()
+
+
+def get_current_user(authorization: str | None = Header(default=None)):
+    auth_token = extract_bearer_token(authorization)
+    if not auth_token:
+        raise HTTPException(status_code=401, detail=AUTH_ERROR_MESSAGE)
+
+    conn = get_conn()
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, username
+            FROM utenti
+            WHERE auth_token_hash = %s
+            """,
+            (hash_auth_token(auth_token),),
+        )
+        user = cur.fetchone()
+    finally:
+        put_conn(conn)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail=AUTH_ERROR_MESSAGE)
+
+    return {"id": user["id"], "username": user["username"]}
+
+
 # --- Models ---
 
 class UsernameBody(BaseModel):
     username: str
+    auth_token: str | None = None
+    legacy_user_id: int | None = None
 
 
 # --- Utenti ---
 
 @app.post("/utenti/login")
 def login(body: UsernameBody):
+    normalized_username = body.username.strip()
+    if not normalized_username:
+        raise HTTPException(status_code=400, detail="Username obbligatorio.")
+
+    provided_auth_token = (body.auth_token or "").strip()
     conn = get_conn()
     try:
-        cur = conn.cursor()
-        cur.execute("INSERT INTO utenti (username) VALUES (%s) ON CONFLICT (username) DO NOTHING", (body.username,))
-        conn.commit()
-        cur.execute("SELECT id FROM utenti WHERE username = %s", (body.username,))
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(
+            """
+            SELECT id, username, auth_token_hash
+            FROM utenti
+            WHERE username = %s
+            """,
+            (normalized_username,),
+        )
         utente = cur.fetchone()
-        return {"id": utente[0], "username": body.username}
+
+        if utente is None:
+            issued_auth_token = issue_auth_token()
+            cur.execute(
+                """
+                INSERT INTO utenti (username, auth_token_hash)
+                VALUES (%s, %s)
+                RETURNING id, username
+                """,
+                (normalized_username, hash_auth_token(issued_auth_token)),
+            )
+            created_user = cur.fetchone()
+            conn.commit()
+            return {
+                "id": created_user["id"],
+                "username": created_user["username"],
+                "auth_token": issued_auth_token,
+            }
+
+        stored_auth_token_hash = utente["auth_token_hash"] or ""
+        if provided_auth_token and hash_auth_token(provided_auth_token) == stored_auth_token_hash:
+            return {
+                "id": utente["id"],
+                "username": utente["username"],
+                "auth_token": provided_auth_token,
+            }
+
+        if not stored_auth_token_hash and body.legacy_user_id == utente["id"]:
+            issued_auth_token = issue_auth_token()
+            cur.execute(
+                """
+                UPDATE utenti
+                SET auth_token_hash = %s
+                WHERE id = %s
+                """,
+                (hash_auth_token(issued_auth_token), utente["id"]),
+            )
+            conn.commit()
+            return {
+                "id": utente["id"],
+                "username": utente["username"],
+                "auth_token": issued_auth_token,
+            }
+
+        raise HTTPException(status_code=409, detail=USERNAME_CONFLICT_MESSAGE)
     finally:
         put_conn(conn)
 
@@ -204,7 +323,8 @@ def health_check():
 # --- Annunci ---
 
 @app.get("/posizioni")
-def get_posizioni():
+def get_posizioni(tipo: str = "casa"):
+    normalized_tipo = normalize_listing_type(tipo)
     conn = get_conn()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -226,6 +346,7 @@ def get_posizioni():
                   AND prezzo IS NOT NULL
                   AND url IS NOT NULL
                   AND url_immagine IS NOT NULL
+                  AND tipo = %s
             ),
             grouped_locations AS (
                 SELECT
@@ -246,6 +367,8 @@ def get_posizioni():
             ORDER BY listing_count DESC, label ASC
             LIMIT 10
             """
+            ,
+            (normalized_tipo,),
         )
         zone_rows = cur.fetchall()
 
@@ -262,7 +385,9 @@ def get_posizioni():
               AND prezzo IS NOT NULL
               AND url IS NOT NULL
               AND url_immagine IS NOT NULL
-            """
+              AND tipo = %s
+            """,
+            (normalized_tipo,),
         )
         summary_row = cur.fetchone()
 
@@ -299,7 +424,7 @@ def get_posizioni():
 @app.get("/annunci/prossimo")
 def prossimo_annuncio(
     background_tasks: BackgroundTasks,
-    utente_id: int,
+    current_user: dict = Depends(get_current_user),
     tipo: str = "casa",
     prezzo_max: int | None = None,
     stanze_min: int | None = None,
@@ -314,6 +439,7 @@ def prossimo_annuncio(
     radius_km: float | None = None,
     exclude_ids: str | None = None,
 ):
+    normalized_tipo = normalize_listing_type(tipo)
     conn = get_conn()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -325,7 +451,7 @@ def prossimo_annuncio(
             "a.url_immagine IS NOT NULL",
             "NOT EXISTS (SELECT 1 FROM visti v WHERE v.utente_id = %s AND v.annuncio_id = a.id)",
         ]
-        params = [tipo, utente_id]
+        params = [normalized_tipo, current_user["id"]]
         excluded_listing_ids = parse_exclude_ids(exclude_ids)
         distance_params = []
         outer_params = []
@@ -431,12 +557,15 @@ def prossimo_annuncio(
 
 
 @app.post("/annunci/{annuncio_id}/like")
-def like_annuncio(annuncio_id: int, utente_id: int):
+def like_annuncio(annuncio_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_conn()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (utente_id, annuncio_id))
-        upsert_preferito(cur, utente_id, annuncio_id, "like")
+        cur.execute(
+            "INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (current_user["id"], annuncio_id),
+        )
+        upsert_preferito(cur, current_user["id"], annuncio_id, "like")
         conn.commit()
         return {"ok": True}
     finally:
@@ -444,12 +573,15 @@ def like_annuncio(annuncio_id: int, utente_id: int):
 
 
 @app.post("/annunci/{annuncio_id}/superlike")
-def superlike_annuncio(annuncio_id: int, utente_id: int):
+def superlike_annuncio(annuncio_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_conn()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (utente_id, annuncio_id))
-        upsert_preferito(cur, utente_id, annuncio_id, "superlike")
+        cur.execute(
+            "INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (current_user["id"], annuncio_id),
+        )
+        upsert_preferito(cur, current_user["id"], annuncio_id, "superlike")
         conn.commit()
         return {"ok": True}
     finally:
@@ -457,11 +589,14 @@ def superlike_annuncio(annuncio_id: int, utente_id: int):
 
 
 @app.post("/annunci/{annuncio_id}/skip")
-def skip_annuncio(annuncio_id: int, utente_id: int):
+def skip_annuncio(annuncio_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_conn()
     try:
         cur = conn.cursor()
-        cur.execute("INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (utente_id, annuncio_id))
+        cur.execute(
+            "INSERT INTO visti (utente_id, annuncio_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (current_user["id"], annuncio_id),
+        )
         conn.commit()
         return {"ok": True}
     finally:
@@ -471,7 +606,7 @@ def skip_annuncio(annuncio_id: int, utente_id: int):
 # --- Preferiti ---
 
 @app.get("/preferiti")
-def get_preferiti(utente_id: int):
+def get_preferiti(current_user: dict = Depends(get_current_user)):
     conn = get_conn()
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -506,7 +641,7 @@ def get_preferiti(utente_id: int):
               AND a.url IS NOT NULL
               AND a.url_immagine IS NOT NULL
             ORDER BY p.created_at DESC NULLS LAST
-        """, (utente_id,))
+        """, (current_user["id"],))
         rows = cur.fetchall()
         return [serialize_preferito(row) for row in rows]
     finally:
@@ -514,11 +649,18 @@ def get_preferiti(utente_id: int):
 
 
 @app.delete("/preferiti/{annuncio_id}")
-def remove_preferito(annuncio_id: int, utente_id: int):
+def remove_preferito(annuncio_id: int, current_user: dict = Depends(get_current_user)):
     conn = get_conn()
     try:
         cur = conn.cursor()
-        cur.execute("DELETE FROM preferiti WHERE utente_id = %s AND annuncio_id = %s", (utente_id, annuncio_id))
+        cur.execute(
+            "DELETE FROM preferiti WHERE utente_id = %s AND annuncio_id = %s",
+            (current_user["id"], annuncio_id),
+        )
+        cur.execute(
+            "DELETE FROM visti WHERE utente_id = %s AND annuncio_id = %s",
+            (current_user["id"], annuncio_id),
+        )
         conn.commit()
         return {"ok": True}
     finally:
