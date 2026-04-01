@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+httpx
+psycopg2
+python-dotenv
+apscheduler
