@@ -22,7 +22,7 @@ services:
       - key: db_host
         sync: false
       - key: db_port
-        value: 5432
+        sync: false
 
   - type: web
     name: casinder-web
