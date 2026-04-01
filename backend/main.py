@@ -3,12 +3,13 @@ import hashlib
 import logging
 import re
 import secrets
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from psycopg2.extras import RealDictCursor
 
@@ -19,14 +20,44 @@ logger = logging.getLogger(__name__)
 SUPPORTED_LISTING_TYPES = {"casa", "stanza"}
 
 
+async def bootstrap_app(app: FastAPI):
+    app.state.db_ready = False
+    app.state.bootstrap_error = None
+
+    try:
+        await asyncio.to_thread(init_db)
+        app.state.db_ready = True
+        logger.info("Database inizializzato correttamente.")
+    except Exception as exc:
+        app.state.bootstrap_error = str(exc)
+        logger.exception("Inizializzazione database fallita.")
+        return
+
+    try:
+        scheduler = AsyncIOScheduler(timezone="Europe/Rome")
+        scheduler.add_job(scrape, "interval", minutes=10, next_run_time=datetime.now() + timedelta(seconds=5))
+        scheduler.start()
+        app.state.scheduler = scheduler
+        logger.info("Scheduler avviato correttamente.")
+    except Exception as exc:
+        app.state.bootstrap_error = str(exc)
+        logger.exception("Avvio scheduler fallito.")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    scheduler = AsyncIOScheduler(timezone="Europe/Rome")
-    scheduler.add_job(scrape, "interval", minutes=10, next_run_time=datetime.now() + timedelta(seconds=5))
-    scheduler.start()
+    app.state.scheduler = None
+    app.state.bootstrap_task = asyncio.create_task(bootstrap_app(app))
     yield
-    scheduler.shutdown()
+    bootstrap_task = getattr(app.state, "bootstrap_task", None)
+    if bootstrap_task and not bootstrap_task.done():
+        bootstrap_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await bootstrap_task
+
+    scheduler = getattr(app.state, "scheduler", None)
+    if scheduler and scheduler.running:
+        scheduler.shutdown()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -37,6 +68,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def block_requests_until_ready(request, call_next):
+    if request.url.path == "/health":
+        return await call_next(request)
+
+    bootstrap_task = getattr(app.state, "bootstrap_task", None)
+    db_ready = getattr(app.state, "db_ready", False)
+    bootstrap_error = getattr(app.state, "bootstrap_error", None)
+
+    if bootstrap_task and not bootstrap_task.done():
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Backend in avvio. Riprova tra qualche secondo."},
+        )
+
+    if bootstrap_error or not db_ready:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Backend non pronto.", "error": bootstrap_error},
+        )
+
+    return await call_next(request)
+
+
+@app.get("/health")
+def health():
+    bootstrap_task = getattr(app.state, "bootstrap_task", None)
+    scheduler = getattr(app.state, "scheduler", None)
+    return {
+        "ok": True,
+        "db_ready": getattr(app.state, "db_ready", False),
+        "bootstrap_complete": bootstrap_task.done() if bootstrap_task else True,
+        "scheduler_running": bool(scheduler and scheduler.running),
+        "bootstrap_error": getattr(app.state, "bootstrap_error", None),
+    }
 
 
 def ensure_full_description(cur, annuncio_id, descrizione):
@@ -306,19 +374,6 @@ def login(body: UsernameBody):
         raise HTTPException(status_code=409, detail=USERNAME_CONFLICT_MESSAGE)
     finally:
         put_conn(conn)
-
-
-@app.get("/health")
-def health_check():
-    conn = get_conn()
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT 1")
-        cur.fetchone()
-        return {"ok": True}
-    finally:
-        put_conn(conn)
-
 
 # --- Annunci ---
 

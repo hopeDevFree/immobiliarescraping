@@ -8,20 +8,50 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).with_name(".env"))
 
-connection_pool = psycopg2.pool.SimpleConnectionPool(
-    1, 10,
-    dbname=os.getenv("db_name"),
-    user=os.getenv("db_user"),
-    password=os.getenv("db_password"),
-    host=os.getenv("db_host"),
-    port=os.getenv("db_port")
-)
+connection_pool = None
+
+
+def read_env(*keys):
+    for key in keys:
+        value = os.getenv(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def build_connection_kwargs():
+    database_url = read_env("DATABASE_URL", "database_url")
+    connect_timeout = int(read_env("db_connect_timeout", "DB_CONNECT_TIMEOUT") or 10)
+
+    if database_url:
+        return {
+            "dsn": database_url,
+            "connect_timeout": connect_timeout,
+        }
+
+    return {
+        "dbname": read_env("db_name", "DB_NAME"),
+        "user": read_env("db_user", "DB_USER"),
+        "password": read_env("db_password", "DB_PASSWORD"),
+        "host": read_env("db_host", "DB_HOST"),
+        "port": read_env("db_port", "DB_PORT"),
+        "connect_timeout": connect_timeout,
+    }
+
+
+def get_connection_pool():
+    global connection_pool
+
+    if connection_pool is None:
+        connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, **build_connection_kwargs())
+
+    return connection_pool
 
 def get_conn():
-    return connection_pool.getconn()
+    return get_connection_pool().getconn()
 
 def put_conn(conn):
-    connection_pool.putconn(conn)
+    get_connection_pool().putconn(conn)
 
 def ensure_column(cur, table_name, column_name, definition):
     cur.execute(
