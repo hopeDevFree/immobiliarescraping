@@ -1,31 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ChevronRightIcon,
   CloseIcon,
   HeartFilledIcon,
   HomeIcon,
   LayoutIcon,
   MapPinIcon,
+  PhotoStackIcon,
   RulerIcon,
-  ExternalLinkIcon,
-  StarIcon,
 } from './Icons'
 import ImageCarousel from './ImageCarousel'
 import {
   formatDistanceKm,
   formatMonthlyPrice,
-  getListingDescription,
   getListingImages,
-  getListingMeta,
+  getListingLayoutLabel,
+  getListingLocationLine,
+  getListingPrimaryArea,
+  getListingSurfaceLabel,
   getListingTitle,
 } from '../utils/listings'
-
-const META_ICONS = {
-  layout: LayoutIcon,
-  location: MapPinIcon,
-  surface: RulerIcon,
-  contract: HomeIcon,
-  source: ExternalLinkIcon,
-}
 
 const SWIPE_THRESHOLD_X = 110
 const SWIPE_THRESHOLD_Y = 125
@@ -50,6 +44,36 @@ function getPointerTargetAction(drag) {
   return ''
 }
 
+function getDealLabel(annuncio) {
+  return annuncio?.tipo === 'stanza' ? 'Stanza' : 'Affitto'
+}
+
+function getEyebrow(annuncio) {
+  const area = getListingPrimaryArea(annuncio)
+  const layout = getListingLayoutLabel(annuncio)
+
+  return [getDealLabel(annuncio), layout, area]
+    .filter(Boolean)
+    .map((value) => value.toUpperCase())
+    .join(' / ')
+}
+
+function getFloorLabel(annuncio) {
+  const rawText = `${annuncio?.titolo || ''} ${annuncio?.descrizione || ''}`
+  const floorMatch = rawText.match(/(\d{1,2})\s*(?:\u00B0|\u00BA)?\s*piano/i)
+
+  if (floorMatch) {
+    return `${floorMatch[1]}\u00B0 Piano`
+  }
+
+  const distanceLabel = formatDistanceKm(annuncio?.distance_km)
+  if (distanceLabel) {
+    return distanceLabel
+  }
+
+  return 'Piano alto'
+}
+
 export default function Card({
   annuncio,
   onLike,
@@ -59,11 +83,13 @@ export default function Card({
   decision = '',
   prefetchAdjacentImages = true,
 }) {
-  const description = getListingDescription(annuncio)
-  const details = getListingMeta(annuncio)
   const images = getListingImages(annuncio)
-  const badgeLabel = annuncio.tipo === 'stanza' ? 'Stanza' : 'Casa'
-  const distanceLabel = formatDistanceKm(annuncio.distance_km)
+  const locationLine = getListingLocationLine(annuncio)
+  const layoutLabel = getListingLayoutLabel(annuncio)
+  const surfaceLabel = getListingSurfaceLabel(annuncio) || `${annuncio?.superficie || '--'} mq`
+  const roomsLabel = annuncio?.stanze ? `${annuncio.stanze} Locali` : layoutLabel
+  const floorLabel = getFloorLabel(annuncio)
+  const photoCount = Math.max(images.length, 1)
   const [drag, setDrag] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const pointerStateRef = useRef({
@@ -107,20 +133,29 @@ export default function Card({
     return () => window.cancelAnimationFrame(frame)
   }, [decision])
 
-  const likeProgress = clamp(drag.x / SWIPE_THRESHOLD_X, 0, 1)
-  const skipProgress = clamp(-drag.x / SWIPE_THRESHOLD_X, 0, 1)
-  const superProgress = clamp(
-    (-drag.y / SWIPE_THRESHOLD_Y) * clamp(1 - Math.abs(drag.x) / SWIPE_THRESHOLD_X, 0, 1),
-    0,
-    1,
-  )
   const showDragTransform = !decision && (isDragging || drag.x !== 0 || drag.y !== 0)
   const dragStyle = showDragTransform
     ? {
-        transform: `translate3d(${drag.x}px, ${drag.y}px, 0) rotate(${drag.x * 0.035}deg)`,
+        transform: `translate3d(${drag.x}px, ${drag.y}px, 0) rotate(${drag.x * 0.024}deg)`,
         transition: isDragging ? 'none' : undefined,
       }
     : undefined
+
+  const liftGlowStyle = useMemo(() => {
+    const likeProgress = clamp(drag.x / SWIPE_THRESHOLD_X, 0, 1)
+    const skipProgress = clamp(-drag.x / SWIPE_THRESHOLD_X, 0, 1)
+    const superProgress = clamp(
+      (-drag.y / SWIPE_THRESHOLD_Y) * clamp(1 - Math.abs(drag.x) / SWIPE_THRESHOLD_X, 0, 1),
+      0,
+      1,
+    )
+
+    return {
+      '--listing-like-progress': likeProgress,
+      '--listing-skip-progress': skipProgress,
+      '--listing-super-progress': superProgress,
+    }
+  }, [drag.x, drag.y])
 
   function requestDecision(nextDecision) {
     if (busy || decision) {
@@ -218,116 +253,106 @@ export default function Card({
   }
 
   return (
-    <section className={`property-scene${decision ? ` is-${decision}` : ''}${isDragging ? ' is-dragging' : ''}`}>
-      <div className="property-stack property-stack--back" aria-hidden="true" />
-      <div className="property-stack property-stack--mid" aria-hidden="true" />
-
+    <section
+      className={`listing-showcase${decision ? ` is-${decision}` : ''}${isDragging ? ' is-dragging' : ''}`}
+      style={liftGlowStyle}
+    >
       <article
-        className={`property-card property-card--interactive${isDragging ? ' is-dragging' : ''}`}
+        className={`listing-showcase__card${isDragging ? ' is-dragging' : ''}`}
         style={dragStyle}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
       >
-        <span
-          className="property-swipe-badge property-swipe-badge--skip"
-          style={decision ? undefined : {
-            opacity: skipProgress,
-            transform: `scale(${0.92 + skipProgress * 0.08}) rotate(-8deg)`,
-          }}
-        >
-          NOPE
-        </span>
-        <span
-          className="property-swipe-badge property-swipe-badge--like"
-          style={decision ? undefined : {
-            opacity: likeProgress,
-            transform: `scale(${0.92 + likeProgress * 0.08}) rotate(8deg)`,
-          }}
-        >
-          LIKE
-        </span>
-        <span
-          className="property-swipe-badge property-swipe-badge--super"
-          style={decision ? undefined : {
-            opacity: superProgress,
-            transform: `translateX(-50%) scale(${0.92 + superProgress * 0.08})`,
-          }}
-        >
-          SUPER
-        </span>
-
-        <div className="property-media">
-          <div className="property-badge-group">
-            <span className="property-badge">{badgeLabel}</span>
-            {distanceLabel && <span className="property-badge property-badge--distance">{distanceLabel}</span>}
+        <div className="listing-showcase__media">
+          <div className="listing-showcase__segment">
+            <span className="listing-showcase__segment-pill listing-showcase__segment-pill--active">
+              {getDealLabel(annuncio)}
+            </span>
+            <span className="listing-showcase__segment-pill">Nuovo annuncio</span>
           </div>
+
           <ImageCarousel
             key={annuncio.id}
             images={images}
             alt={getListingTitle(annuncio)}
             dragEnabled={false}
             prefetchAdjacent={prefetchAdjacentImages}
+            showControls={false}
+            showCounter={false}
+            showDots={false}
           />
+
+          <span className="listing-showcase__photo-count">
+            <PhotoStackIcon />
+            {photoCount} foto
+          </span>
         </div>
 
-        <div className="property-content">
-          <h2 className="property-title">{getListingTitle(annuncio)}</h2>
+        <div className="listing-showcase__body">
+          <p className="listing-showcase__eyebrow">{getEyebrow(annuncio)}</p>
 
-          <p className="property-price">
-            <span>{formatMonthlyPrice(annuncio.prezzo)}</span>
-            <small>/ mese</small>
-          </p>
+          <div className="listing-showcase__headline">
+            <div className="listing-showcase__headline-copy">
+              <h2 className="listing-showcase__title">{getListingTitle(annuncio)}</h2>
+              <p className="listing-showcase__location">
+                <MapPinIcon />
+                <span>{locationLine}</span>
+              </p>
+            </div>
 
-          <div className="property-meta">
-            {details.map((detail) => {
-              const Icon = META_ICONS[detail.key] || HomeIcon
-
-              return (
-                <span key={`${detail.key}-${detail.label}`} className="property-meta__item">
-                  <Icon className="property-meta__icon" />
-                  {detail.label}
-                </span>
-              )
-            })}
+            <p className="listing-showcase__price">{formatMonthlyPrice(annuncio.prezzo)}</p>
           </div>
 
-          {description && <p className="property-description">{description}</p>}
+          <div className="listing-showcase__facts">
+            <span className="listing-showcase__fact">
+              <RulerIcon />
+              {surfaceLabel}
+            </span>
+            <span className="listing-showcase__fact">
+              <LayoutIcon />
+              {roomsLabel}
+            </span>
+            <span className="listing-showcase__fact">
+              <HomeIcon />
+              {floorLabel}
+            </span>
+          </div>
+
+          <div className="listing-showcase__actions">
+            <button
+              type="button"
+              className="listing-showcase__action listing-showcase__action--skip"
+              onClick={onSkip}
+              disabled={busy}
+            >
+              <CloseIcon />
+              Scarta
+            </button>
+
+            <button
+              type="button"
+              className="listing-showcase__action listing-showcase__action--like"
+              onClick={onLike}
+              disabled={busy}
+            >
+              <HeartFilledIcon />
+              Salva
+            </button>
+          </div>
+
+          <a
+            href={annuncio.url}
+            target="_blank"
+            rel="noreferrer"
+            className="listing-showcase__cta"
+          >
+            <span>Vedi dettagli</span>
+            <ChevronRightIcon />
+          </a>
         </div>
       </article>
-
-      <div className="action-row">
-        <button
-          type="button"
-          className="action-circle action-circle--skip"
-          onClick={onSkip}
-          disabled={busy}
-          aria-label="Scarta annuncio"
-        >
-          <CloseIcon className="action-circle__icon" />
-        </button>
-
-        <button
-          type="button"
-          className="action-circle action-circle--super"
-          onClick={onSuperLike}
-          disabled={busy}
-          aria-label="Super like"
-        >
-          <StarIcon className="action-circle__icon" />
-        </button>
-
-        <button
-          type="button"
-          className="action-circle action-circle--like"
-          onClick={onLike}
-          disabled={busy}
-          aria-label="Salva tra i preferiti"
-        >
-          <HeartFilledIcon className="action-circle__icon" />
-        </button>
-      </div>
     </section>
   )
 }

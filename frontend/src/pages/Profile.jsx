@@ -4,8 +4,9 @@ import axios from 'axios'
 import AppShell from '../components/AppShell'
 import { HeartIcon, HomeIcon, LogOutIcon, UserIcon } from '../components/Icons'
 import { formatMonthlyPrice } from '../utils/listings'
+import { API_BASE_URL } from '../utils/api'
 
-const API = import.meta.env.VITE_API_URL
+const API = API_BASE_URL
 const FILTERS_STORAGE_KEY = 'casinder-swipe-filters'
 
 function readStoredFilters() {

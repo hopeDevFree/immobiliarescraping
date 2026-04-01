@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: casinder-api
+    runtime: python
+    repo: https://github.com/hopeDevFree/immobiliarescraping.git
+    branch: casinder-migration
+    rootDir: backend
+    plan: free
+    autoDeployTrigger: commit
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: db_name
+        sync: false
+      - key: db_user
+        sync: false
+      - key: db_password
+        sync: false
+      - key: db_host
+        sync: false
+      - key: db_port
+        value: 5432
+
+  - type: web
+    name: casinder-web
+    runtime: static
+    repo: https://github.com/hopeDevFree/immobiliarescraping.git
+    branch: casinder-migration
+    rootDir: frontend
+    autoDeployTrigger: commit
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

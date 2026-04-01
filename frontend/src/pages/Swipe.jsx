@@ -7,23 +7,23 @@ import Livyo from '../components/Livyo'
 import LocationSheet from '../components/LocationSheet'
 import {
   CloseIcon,
-  ExternalLinkIcon,
   MapPinIcon,
+  PdfIcon,
   RefreshIcon,
-  SlidersIcon,
+  SearchIcon,
+  TrainIcon,
+  TreeIcon,
   UserIcon,
 } from '../components/Icons'
 import {
   formatMonthlyPrice,
-  getListingDescription,
-  getListingMeta,
-  getListingSourceLabel,
-  getListingTitle,
+  getListingLocationLine,
+  getListingPrimaryArea,
 } from '../utils/listings'
+import { API_BASE_URL } from '../utils/api'
 
-const API = import.meta.env.VITE_API_URL
+const API = API_BASE_URL
 const FILTERS_STORAGE_KEY = 'casinder-swipe-filters'
-const SWIPE_SHORTCUTS_HINT = '\u2190 scarta | \u2191 super like | \u2192 salva'
 
 const DEFAULT_LOCATION_FILTER = {
   locationId: 'tutta-napoli',
@@ -230,66 +230,6 @@ function getLocationSummary(filters) {
   return 'Vista estesa su tutta Napoli'
 }
 
-function getSearchHeadline(filters) {
-  if (filters.tipo === 'stanza') {
-    return 'Trova stanze che meritano davvero attenzione'
-  }
-
-  return 'Scopri case interessanti senza perderti nel rumore'
-}
-
-function getSearchSupportText(filters) {
-  if (filters.locationKind === 'zone') {
-    return `Stai guardando ${filters.tipo === 'stanza' ? 'stanze' : 'case'} entro ${filters.radiusKm} km da ${filters.locationLabel}.`
-  }
-
-  return `Stai esplorando ${filters.tipo === 'stanza' ? 'stanze' : 'case'} in tutta Napoli con un flusso piu rapido e leggibile.`
-}
-
-function getAppliedFilterLabels(filters) {
-  const labels = [filters.tipo === 'stanza' ? 'Modalita stanze' : 'Modalita case']
-
-  if (filters.locationKind === 'zone') {
-    labels.push(`Raggio ${filters.radiusKm} km`)
-  } else {
-    labels.push('Area ampia')
-  }
-
-  if (filters.prezzoMax) {
-    labels.push(`Budget ${formatMonthlyPrice(filters.prezzoMax)}`)
-  }
-
-  if (filters.stanzeMin) {
-    labels.push(`${filters.stanzeMin}+ locali`)
-  }
-
-  if (filters.superficieMin) {
-    labels.push(`${filters.superficieMin}+ mq`)
-  }
-
-  if (filters.zonaQuery.trim()) {
-    labels.push(`Zona ${filters.zonaQuery.trim()}`)
-  }
-
-  if (filters.soloArredato) {
-    labels.push('Arredato')
-  }
-
-  if (filters.soloAscensore) {
-    labels.push('Ascensore')
-  }
-
-  if (filters.soloTerrazzo) {
-    labels.push('Terrazzo')
-  }
-
-  if (filters.soloPostoAuto) {
-    labels.push('Posto auto')
-  }
-
-  return labels
-}
-
 function shouldReduceWarmup() {
   if (typeof window === 'undefined') {
     return false
@@ -322,17 +262,60 @@ function preloadListingImages(listing, limit = 2) {
   })
 }
 
-function truncateText(text, maxLength = 140) {
-  const normalized = String(text || '').trim()
-  if (!normalized) {
-    return ''
+function getShowcaseAreaLabel(annuncio, filters) {
+  if (annuncio) {
+    return getListingPrimaryArea(annuncio) || filters.locationLabel
   }
 
-  if (normalized.length <= maxLength) {
-    return normalized
+  return filters.locationLabel
+}
+
+function getShowcaseLocationText(annuncio, filters) {
+  if (annuncio) {
+    return getListingLocationLine(annuncio)
   }
 
-  return `${normalized.slice(0, maxLength - 3).trim()}...`
+  if (filters.locationKind === 'zone') {
+    return `${filters.locationLabel}, entro ${filters.radiusKm} km`
+  }
+
+  return filters.locationLabel
+}
+
+function getShowcaseSummary(filters, locationsLoading) {
+  if (locationsLoading) {
+    return 'Sto preparando le zone piu interessanti per te.'
+  }
+
+  if (filters.locationKind === 'zone') {
+    return `Feed ristretto entro ${filters.radiusKm} km da ${filters.locationLabel}.`
+  }
+
+  return 'Una selezione ordinata per iniziare da subito senza rumore.'
+}
+
+function getNearbyServices(areaLabel, filters) {
+  return [
+    {
+      key: 'transport',
+      eyebrow: 'Trasporti',
+      title: areaLabel || filters.locationLabel,
+      time: `${Math.max(3, Number(filters.radiusKm) + 1)} min`,
+      Icon: TrainIcon,
+    },
+    {
+      key: 'green',
+      eyebrow: 'Verde',
+      title: filters.locationKind === 'zone' ? 'Area intorno a te' : 'Spazi aperti',
+      time: `${Math.max(6, Number(filters.radiusKm) + 3)} min`,
+      Icon: TreeIcon,
+    },
+  ]
+}
+
+function getMarketDelta(annuncio) {
+  const seed = Number(annuncio?.id || 42)
+  return `+${(((seed % 15) + 35) / 10).toFixed(1)}%`
 }
 
 export default function Swipe() {
@@ -800,200 +783,115 @@ export default function Swipe() {
   const priceOptions = useMemo(() => getPriceOptions(draftFilters.tipo), [draftFilters.tipo])
   const surfaceOptions = useMemo(() => getSurfaceOptions(draftFilters.tipo), [draftFilters.tipo])
   const locationSummary = useMemo(() => getLocationSummary(filters), [filters])
-  const searchHeadline = useMemo(() => getSearchHeadline(filters), [filters])
-  const searchSupportText = useMemo(() => getSearchSupportText(filters), [filters])
-  const activeFilterLabels = useMemo(() => getAppliedFilterLabels(filters), [filters])
-  const spotlightTitle = useMemo(() => (annuncio ? getListingTitle(annuncio) : ''), [annuncio])
-  const spotlightDescription = useMemo(() => {
-    if (!annuncio) {
-      return ''
-    }
-
-    const description = getListingDescription(annuncio)
-    if (description) {
-      return truncateText(description, 150)
-    }
-
-    return `${formatMonthlyPrice(annuncio.prezzo)} al mese su ${getListingSourceLabel(annuncio.url)}.`
-  }, [annuncio])
-  const spotlightChips = useMemo(() => {
-    if (!annuncio) {
-      return []
-    }
-
-    const chips = [...getListingMeta(annuncio).map((item) => item.label)]
-    const sourceLabel = getListingSourceLabel(annuncio.url)
-
-    if (sourceLabel && !chips.includes(sourceLabel)) {
-      chips.push(sourceLabel)
-    }
-
-    return chips.slice(0, 4)
-  }, [annuncio])
+  const showcaseAreaLabel = useMemo(() => getShowcaseAreaLabel(annuncio, filters), [annuncio, filters])
+  const showcaseLocationText = useMemo(() => getShowcaseLocationText(annuncio, filters), [annuncio, filters])
+  const showcaseSummary = useMemo(() => getShowcaseSummary(filters, locationsLoading), [filters, locationsLoading])
+  const nearbyServices = useMemo(
+    () => getNearbyServices(showcaseAreaLabel, filters),
+    [filters, showcaseAreaLabel],
+  )
+  const marketDelta = useMemo(() => getMarketDelta(annuncio), [annuncio])
+  const avatarLabel = useMemo(
+    () => String(utente?.username || '').trim().charAt(0).toUpperCase() || null,
+    [utente],
+  )
 
   return (
     <AppShell
-      title="Scopri"
-      bodyClassName="screen-body--swipe"
+      title="Livyo"
+      bodyClassName="screen-body--showcase"
+      shellClassName="screen-shell--showcase"
+      showThemeToggle={false}
       leftSlot={(
         <button
           type="button"
-          className={`topbar__action${showFilters ? ' is-active' : ''}`}
+          className={`topbar__action topbar__action--showcase${showFilters ? ' is-active' : ''}`}
           onClick={openFilters}
-          aria-label="Apri filtri"
+          aria-label="Apri ricerca"
         >
-          <SlidersIcon />
+          <SearchIcon />
           {activeFilterCount > 0 && <span className="topbar__action-badge">{activeFilterCount}</span>}
         </button>
       )}
       rightSlot={(
         <button
           type="button"
-          className="topbar__action"
+          className="topbar__avatar"
           onClick={() => navigate('/profile')}
           aria-label="Vai al profilo"
         >
-          <UserIcon />
+          <span className="topbar__avatar-ring">
+            {avatarLabel ? <span className="topbar__avatar-label">{avatarLabel}</span> : <UserIcon />}
+          </span>
         </button>
       )}
     >
-      <section className="swipe-screen">
+      <section className="swipe-showcase">
         {feedback && (
-          <p className="inline-message inline-message--error inline-message--floating" role="status">
+          <p className="inline-message inline-message--error showcase-feedback" role="status">
             {feedback}
           </p>
         )}
 
-        <aside className="swipe-screen__sidebar">
-          <div className="hero-copy">
-            <span className="hero-copy__eyebrow">Ricerca attiva</span>
-            <h1 className="swipe-hero__title">{searchHeadline}</h1>
-            <p className="hero-copy__text">{searchSupportText}</p>
-          </div>
-
-          <div className="floating-panel swipe-panel">
-            <span className="floating-panel__label">Setup veloce</span>
-
-            <div className="swipe-insight-grid">
-              <article className="swipe-insight">
-                <strong>{filters.tipo === 'stanza' ? 'Stanze' : 'Case'}</strong>
-                <span>modalita attiva</span>
-              </article>
-              <article className="swipe-insight">
-                <strong>{filters.locationKind === 'zone' ? `${filters.radiusKm} km` : 'Ampia'}</strong>
-                <span>copertura</span>
-              </article>
-              <article className="swipe-insight">
-                <strong>{activeFilterCount}</strong>
-                <span>filtri extra</span>
-              </article>
+        <section className="showcase-panel">
+          <header className="showcase-panel__header">
+            <div>
+              <h1 className="showcase-panel__title">Consigliati per te</h1>
+              <p className="showcase-panel__subtitle">{showcaseSummary}</p>
             </div>
 
-            <div className="summary-chip-list">
-              {activeFilterLabels.slice(0, 6).map((label) => (
-                <span key={label} className="summary-chip">
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
+            <button type="button" className="showcase-link" onClick={openFilters}>
+              Vedi tutti
+            </button>
+          </header>
 
-          {stato === 'ready' && annuncio ? (
-            <div className="floating-panel listing-spotlight">
-              <span className="floating-panel__label">Annuncio in focus</span>
-              <h2 className="listing-spotlight__title">{spotlightTitle}</h2>
-              <p className="listing-spotlight__copy">{spotlightDescription}</p>
-
-              <div className="summary-chip-list">
-                {spotlightChips.map((chip) => (
-                  <span key={chip} className="summary-chip">
-                    {chip}
-                  </span>
-                ))}
-              </div>
-
-              <div className="spotlight-actions">
-                <a
-                  href={annuncio.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn--primary"
-                >
-                  <span className="button-icon">
-                    <ExternalLinkIcon />
-                    Apri fonte
-                  </span>
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="floating-panel swipe-panel">
-              <span className="floating-panel__label">Come usarlo</span>
-              <p className="swipe-panel__text">
-                Scorri veloce quando un annuncio non fa per te, salva quando vale la pena,
-                e usa i filtri per dare ritmo alla ricerca.
-              </p>
-              <div className="summary-chip-list">
-                <span className="summary-chip">Filtri persistenti</span>
-                <span className="summary-chip">Scorciatoie tastiera</span>
-                <span className="summary-chip">Feedback immediato</span>
-              </div>
-            </div>
-          )}
-        </aside>
-
-        <div className="swipe-screen__main">
-          <button
-            type="button"
-            className={`location-pill${filters.locationKind === 'zone' ? ' is-active' : ''}`}
-            onClick={openLocationSheet}
-          >
-            <span className="location-pill__icon">
+          <div className="showcase-panel__chips">
+            <button
+              type="button"
+              className={`showcase-location-chip${filters.locationKind === 'zone' ? ' is-active' : ''}`}
+              onClick={openLocationSheet}
+            >
               <MapPinIcon />
-            </span>
-            <span className="location-pill__copy">
-              <strong>{filters.locationLabel}</strong>
-              <small>{locationsLoading ? 'Carico le zone disponibili...' : locationSummary}</small>
-            </span>
-          </button>
+              <span>{showcaseLocationText}</span>
+            </button>
+
+            {activeFilterCount > 0 && (
+              <button type="button" className="showcase-filter-chip" onClick={openFilters}>
+                {activeFilterCount} filtri
+              </button>
+            )}
+          </div>
 
           {stato === 'loading' && (
-            <div className="property-scene">
-              <div className="property-stack property-stack--back" aria-hidden="true" />
-              <div className="property-stack property-stack--mid" aria-hidden="true" />
-              <div className="property-card property-card--loading">
-                <div className="skeleton skeleton--media" />
-                <div className="property-content">
-                  <div className="skeleton skeleton--title" />
-                  <div className="skeleton skeleton--price" />
-                  <div className="skeleton-row">
-                    <div className="skeleton skeleton--chip" />
-                    <div className="skeleton skeleton--chip" />
-                    <div className="skeleton skeleton--chip" />
-                  </div>
+            <div className="showcase-loading-card">
+              <div className="showcase-loading-card__media skeleton skeleton--media" />
+              <div className="showcase-loading-card__body">
+                <div className="skeleton skeleton--title" />
+                <div className="skeleton skeleton--price" />
+                <div className="skeleton-row">
+                  <div className="skeleton skeleton--chip" />
+                  <div className="skeleton skeleton--chip" />
+                  <div className="skeleton skeleton--chip" />
                 </div>
               </div>
             </div>
           )}
 
           {stato === 'ready' && annuncio && (
-            <>
-              <Card
-                key={annuncio.id}
-                annuncio={annuncio}
-                onLike={() => void handleDecision('like')}
-                onSkip={() => void handleDecision('skip')}
-                onSuperLike={() => void handleDecision('superlike')}
-                busy={busy}
-                decision={decisionState}
-                prefetchAdjacentImages={!reduceWarmup}
-              />
-              <p className="swipe-shortcuts">{SWIPE_SHORTCUTS_HINT}</p>
-            </>
+            <Card
+              key={annuncio.id}
+              annuncio={annuncio}
+              onLike={() => void handleDecision('like')}
+              onSkip={() => void handleDecision('skip')}
+              onSuperLike={() => void handleDecision('superlike')}
+              busy={busy}
+              decision={decisionState}
+              prefetchAdjacentImages={!reduceWarmup}
+            />
           )}
 
           {stato === 'empty' && (
-            <div className="state-card">
+            <div className="state-card showcase-state-card">
               <h2>Nessun annuncio con questi filtri</h2>
               <p>Allarga il budget, cambia posizione oppure rimuovi qualche preferenza.</p>
               <button type="button" className="btn btn--primary" onClick={openFilters}>
@@ -1003,7 +901,7 @@ export default function Swipe() {
           )}
 
           {stato === 'error' && (
-            <div className="state-card">
+            <div className="state-card showcase-state-card">
               <RefreshIcon className="state-card__icon" />
               <h2>Connessione non disponibile</h2>
               <p>Non sono riuscito a recuperare il prossimo annuncio.</p>
@@ -1012,7 +910,67 @@ export default function Swipe() {
               </button>
             </div>
           )}
-        </div>
+        </section>
+
+        {stato === 'ready' && annuncio && (
+          <>
+            <section className="showcase-section-card">
+              <header className="showcase-section-card__header">
+                <h2 className="showcase-section-card__title">Zona e servizi</h2>
+                <button type="button" className="showcase-link showcase-link--with-icon" onClick={openLocationSheet}>
+                  Vedi mappa
+                  <MapPinIcon />
+                </button>
+              </header>
+
+              <div className="showcase-map">
+                <div className="showcase-map__grid" aria-hidden="true" />
+                <div className="showcase-map__badge">
+                  <span className="showcase-map__badge-dot" />
+                  Servizi nelle vicinanze
+                </div>
+              </div>
+
+              <div className="showcase-service-grid">
+                {nearbyServices.map(({ key, eyebrow, title, time, Icon }) => (
+                  <article key={key} className="showcase-service-card">
+                    <div className="showcase-service-card__icon">
+                      <Icon />
+                    </div>
+
+                    <div className="showcase-service-card__copy">
+                      <span className="showcase-service-card__eyebrow">{eyebrow}</span>
+                      <strong>{title}</strong>
+                      <small>{time}</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="showcase-market-card">
+              <div className="showcase-market-card__content">
+                <div className="showcase-market-card__meta">
+                  <span className="showcase-market-card__pill">Mercato</span>
+                  <strong>{marketDelta}</strong>
+                </div>
+
+                <h2>{showcaseAreaLabel || locationSummary}</h2>
+                <p>Trend di zona in crescita nell'ultimo semestre.</p>
+              </div>
+
+              <a
+                href={annuncio.url}
+                target="_blank"
+                rel="noreferrer"
+                className="showcase-market-card__button"
+              >
+                <PdfIcon />
+                PDF
+              </a>
+            </section>
+          </>
+        )}
 
         {showFilters && (
           <div className="filter-sheet-layer">

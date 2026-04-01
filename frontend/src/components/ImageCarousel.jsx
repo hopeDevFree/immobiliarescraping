@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from './Icons'
 
-export default function ImageCarousel({ images, alt, compact = false, dragEnabled = true, prefetchAdjacent = true }) {
+export default function ImageCarousel({
+  images,
+  alt,
+  compact = false,
+  dragEnabled = true,
+  prefetchAdjacent = true,
+  showControls = true,
+  showCounter = true,
+  showDots = true,
+}) {
   const gallery = useMemo(() => (Array.isArray(images) ? images.filter(Boolean) : []), [images])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loadedImages, setLoadedImages] = useState(() => new Set())
@@ -205,38 +214,46 @@ export default function ImageCarousel({ images, alt, compact = false, dragEnable
         </div>
       </div>
 
-      {hasMultipleImages && (
+      {hasMultipleImages && (showControls || showCounter || showDots) && (
         <>
-          <button
-            type="button"
-            className="carousel__control carousel__control--prev"
-            onClick={showPreviousImage}
-            aria-label="Immagine precedente"
-          >
-            <ChevronLeftIcon />
-          </button>
+          {showControls && (
+            <>
+              <button
+                type="button"
+                className="carousel__control carousel__control--prev"
+                onClick={showPreviousImage}
+                aria-label="Immagine precedente"
+              >
+                <ChevronLeftIcon />
+              </button>
 
-          <button
-            type="button"
-            className="carousel__control carousel__control--next"
-            onClick={showNextImage}
-            aria-label="Immagine successiva"
-          >
-            <ChevronRightIcon />
-          </button>
+              <button
+                type="button"
+                className="carousel__control carousel__control--next"
+                onClick={showNextImage}
+                aria-label="Immagine successiva"
+              >
+                <ChevronRightIcon />
+              </button>
+            </>
+          )}
 
-          <span className="carousel__counter">
-            {activeIndex + 1} / {gallery.length}
-          </span>
+          {showCounter && (
+            <span className="carousel__counter">
+              {activeIndex + 1} / {gallery.length}
+            </span>
+          )}
 
-          <div className="carousel__dots" aria-hidden="true">
-            {gallery.map((imageUrl, index) => (
-              <span
-                key={`${imageUrl}-${index}`}
-                className={`carousel__dot${index === activeIndex ? ' is-active' : ''}`}
-              />
-            ))}
-          </div>
+          {showDots && (
+            <div className="carousel__dots" aria-hidden="true">
+              {gallery.map((imageUrl, index) => (
+                <span
+                  key={`${imageUrl}-${index}`}
+                  className={`carousel__dot${index === activeIndex ? ' is-active' : ''}`}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

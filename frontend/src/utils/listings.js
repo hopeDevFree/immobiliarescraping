@@ -82,6 +82,10 @@ function extractSurfaceLabel(annuncio) {
   return `${match[1]} m\u00B2`
 }
 
+function getPrimaryArea(annuncio) {
+  return annuncio?.microzona?.trim() || annuncio?.macrozona?.trim() || annuncio?.zona?.trim() || ''
+}
+
 export function getListingSourceLabel(url) {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, '')
@@ -142,7 +146,7 @@ export function getListingDescription(annuncio) {
 
 export function getListingTitle(annuncio) {
   const title = normalizeTitle(annuncio?.titolo)
-  const zone = annuncio?.microzona?.trim() || annuncio?.macrozona?.trim() || annuncio?.zona?.trim()
+  const zone = getPrimaryArea(annuncio)
 
   if (title && zone && !title.toLowerCase().includes(zone.toLowerCase())) {
     return `${title} in zona ${zone}`
@@ -156,9 +160,32 @@ export function getListingTitle(annuncio) {
   return zone ? `${fallback} in zona ${zone}` : fallback
 }
 
+export function getListingLayoutLabel(annuncio) {
+  return inferLayoutLabel(annuncio)
+}
+
+export function getListingSurfaceLabel(annuncio) {
+  return extractSurfaceLabel(annuncio)
+}
+
+export function getListingPrimaryArea(annuncio) {
+  return getPrimaryArea(annuncio)
+}
+
+export function getListingLocationLine(annuncio) {
+  const city = annuncio?.zona?.trim() || 'Napoli'
+  const area = getPrimaryArea(annuncio)
+
+  if (!area || area.toLowerCase() === city.toLowerCase()) {
+    return city
+  }
+
+  return `${city}, ${area}`
+}
+
 export function getListingMeta(annuncio) {
   const meta = [{ key: 'layout', label: inferLayoutLabel(annuncio) }]
-  const zone = annuncio?.microzona?.trim() || annuncio?.macrozona?.trim() || annuncio?.zona?.trim()
+  const zone = getPrimaryArea(annuncio)
   const surface = extractSurfaceLabel(annuncio)
 
   if (zone) {

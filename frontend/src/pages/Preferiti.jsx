@@ -12,8 +12,9 @@ import {
   getListingSourceLabel,
   getListingTitle,
 } from '../utils/listings'
+import { API_BASE_URL, getApiErrorMessage } from '../utils/api'
 
-const API = import.meta.env.VITE_API_URL
+const API = API_BASE_URL
 
 function getAveragePrice(listings) {
   const pricedListings = listings
@@ -51,8 +52,8 @@ export default function Preferiti() {
       try {
         const res = await axios.get(`${API}/preferiti`, { params: { utente_id: utente.id } })
         setPreferiti(res.data)
-      } catch {
-        setError('Non sono riuscito a caricare i preferiti.')
+      } catch (error) {
+        setError(getApiErrorMessage(error))
       } finally {
         setLoading(false)
       }
@@ -67,8 +68,8 @@ export default function Preferiti() {
     try {
       await axios.delete(`${API}/preferiti/${id}`, { params: { utente_id: utente.id } })
       setPreferiti((current) => current.filter((preferito) => preferito.id !== id))
-    } catch {
-      setError('Non sono riuscito a rimuovere questo annuncio.')
+    } catch (error) {
+      setError(getApiErrorMessage(error))
     } finally {
       setBusyId(null)
     }

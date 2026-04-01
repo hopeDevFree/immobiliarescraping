@@ -2,26 +2,27 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import ThemeToggle from '../components/ThemeToggle'
-import { HeartIcon, MapPinIcon, ShieldIcon } from '../components/Icons'
+import { CompassIcon, HeartIcon, MapPinIcon, SearchIcon, ShieldIcon } from '../components/Icons'
+import { API_BASE_URL, getApiDisplayUrl, getApiErrorMessage } from '../utils/api'
 
-const API = import.meta.env.VITE_API_URL
+const API = API_BASE_URL
 const LAST_USERNAME_STORAGE_KEY = 'casinder-last-username'
 
 const TRUST_HIGHLIGHTS = [
   {
-    title: 'Ricerca piu mirata',
-    text: 'Filtri rapidi, raggio e preferenze utili senza schermate pesanti.',
+    title: 'Feed piu leggibile',
+    text: 'Scorri solo annunci gia ripuliti e pronti da confrontare.',
+    icon: SearchIcon,
+  },
+  {
+    title: 'Zone subito chiare',
+    text: 'Parti da Napoli o stringi il raggio quando hai gia un punto preciso.',
     icon: MapPinIcon,
   },
   {
-    title: 'Salvataggi immediati',
-    text: 'Tieni da parte gli annunci migliori e riguardali con calma.',
+    title: 'Preferiti immediati',
+    text: 'Salva tutto quello che vuoi rivedere, senza account pesanti.',
     icon: HeartIcon,
-  },
-  {
-    title: 'Accesso leggero',
-    text: 'Entri con uno username locale, senza password o frizione inutile.',
-    icon: ShieldIcon,
   },
 ]
 
@@ -31,6 +32,14 @@ function getInitialUsername() {
   }
 
   return window.localStorage.getItem(LAST_USERNAME_STORAGE_KEY) || ''
+}
+
+function getLoginError(error) {
+  if (!API) {
+    return 'VITE_API_URL non e configurato. Controlla frontend/.env e riavvia Vite.'
+  }
+
+  return getApiErrorMessage(error)
 }
 
 export default function Login() {
@@ -55,41 +64,75 @@ export default function Login() {
       localStorage.setItem('utente', JSON.stringify(res.data))
       localStorage.setItem(LAST_USERNAME_STORAGE_KEY, normalizedUsername)
       navigate('/swipe')
-    } catch {
-      setError('Errore di connessione. Riprova.')
+    } catch (requestError) {
+      setError(getLoginError(requestError))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="auth-view">
-      <section className="auth-card">
-        <div className="auth-toolbar">
+    <div className="auth-view auth-view--showcase">
+      <section className="auth-card auth-card--showcase">
+        <div className="auth-toolbar auth-toolbar--showcase">
+          <span className="auth-brand-pill">
+            <CompassIcon />
+            Livyo
+          </span>
           <ThemeToggle compact />
         </div>
 
-        <div className="auth-layout">
-          <div className="auth-copy">
+        <div className="auth-layout auth-layout--showcase">
+          <div className="auth-copy auth-copy--showcase">
             <span className="auth-kicker">Affitti a colpo d'occhio</span>
-            <h1 className="auth-title">Casinder</h1>
-            <p className="auth-subtitle">
-              Scopri case e stanze con il ritmo di una dating app, ma con piu contesto,
-              meno rumore e filtri che aiutano davvero.
+            <h1 className="auth-title auth-title--showcase">Trova casa senza rumore.</h1>
+            <p className="auth-subtitle auth-subtitle--showcase">
+              Un ingresso leggero, una UI piu editoriale e un feed costruito per farti decidere
+              in pochi secondi.
             </p>
 
-            <div className="auth-pills">
+            <div className="auth-pills auth-pills--showcase">
               <span>Swipe mirato</span>
-              <span>Filtri smart</span>
-              <span>Annunci salvati</span>
+              <span>Servizi vicini</span>
+              <span>Preferiti</span>
             </div>
 
-            <div className="auth-highlight-grid">
+            <div className="auth-preview">
+              <div className="auth-preview__surface">
+                <div className="auth-preview__topline">
+                  <span className="auth-preview__eyebrow">Consigliati per te</span>
+                  <span className="auth-preview__link">Vedi tutti</span>
+                </div>
+
+                <div className="auth-preview__card">
+                  <div className="auth-preview__media">
+                    <div className="auth-preview__pill-group">
+                      <span className="auth-preview__pill auth-preview__pill--active">Affitto</span>
+                      <span className="auth-preview__pill">Nuovo</span>
+                    </div>
+                  </div>
+
+                  <div className="auth-preview__body">
+                    <span className="auth-preview__meta">TRILOCALE / BRERA</span>
+                    <div className="auth-preview__headline">
+                      <strong>Attico in Brera</strong>
+                      <span>EUR 750.000</span>
+                    </div>
+                    <div className="auth-preview__location">
+                      <MapPinIcon />
+                      Milano, Via Solferino
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="auth-highlight-grid auth-highlight-grid--showcase">
               {TRUST_HIGHLIGHTS.map((item) => {
                 const Icon = item.icon
 
                 return (
-                  <article key={item.title} className="auth-highlight">
+                  <article key={item.title} className="auth-highlight auth-highlight--showcase">
                     <span className="auth-highlight__icon">
                       <Icon />
                     </span>
@@ -101,20 +144,24 @@ export default function Login() {
                 )
               })}
             </div>
-
-            <p className="auth-note">
-              Nessuna password: usiamo solo uno username locale per iniziare, e puoi cambiare
-              profilo quando vuoi.
-            </p>
           </div>
 
-          <div className="auth-panel">
-            <form onSubmit={handleSubmit} className="auth-form">
-              <label className="filter-input" htmlFor="username">
+          <div className="auth-panel auth-panel--showcase">
+            <div className="auth-panel__intro">
+              <span className="auth-panel__eyebrow">
+                <ShieldIcon />
+                Accesso leggero
+              </span>
+              <h2>Entra con uno username</h2>
+              <p>Nessuna password. Ti basta un nome locale per iniziare a salvare annunci.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="auth-form auth-form--showcase">
+              <label className="filter-input auth-input-group" htmlFor="username">
                 <span className="filter-section__label">Username</span>
                 <input
                   id="username"
-                  className="auth-input"
+                  className="auth-input auth-input--showcase"
                   type="text"
                   placeholder="Scegli un username"
                   value={username}
@@ -123,18 +170,22 @@ export default function Login() {
                   autoComplete="nickname"
                   autoFocus
                   required
-                  aria-describedby="auth-helper"
+                  aria-describedby="auth-helper auth-api-note"
                 />
               </label>
 
-              {error && <p className="auth-error">{error}</p>}
+              {error && <p className="auth-error auth-error--showcase">{error}</p>}
 
-              <button className="auth-button" type="submit" disabled={loading || !username.trim()}>
-                {loading ? 'Accesso in corso...' : 'Entra in Casinder'}
+              <button className="auth-button auth-button--showcase" type="submit" disabled={loading || !username.trim()}>
+                {loading ? 'Accesso in corso...' : 'Entra in Livyo'}
               </button>
 
-              <p id="auth-helper" className="auth-helper">
-                Ti basta un nome per iniziare. Il resto dell'esperienza si costruisce mentre navighi.
+              <p id="auth-helper" className="auth-helper auth-helper--showcase">
+                Se il login non parte, il primo controllo da fare e che il backend sia online.
+              </p>
+
+              <p id="auth-api-note" className="auth-api-note">
+                API attuale: <code>{getApiDisplayUrl()}</code>
               </p>
             </form>
           </div>

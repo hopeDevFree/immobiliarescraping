@@ -189,6 +189,18 @@ def login(body: UsernameBody):
         put_conn(conn)
 
 
+@app.get("/health")
+def health_check():
+    conn = get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        return {"ok": True}
+    finally:
+        put_conn(conn)
+
+
 # --- Annunci ---
 
 @app.get("/posizioni")

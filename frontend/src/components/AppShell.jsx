@@ -1,10 +1,11 @@
-import { NavLink, useLocation } from 'react-router-dom'
-import { HeartIcon, HomeIcon, UserIcon } from './Icons'
+import { NavLink } from 'react-router-dom'
+import { CompassIcon, HeartIcon, SearchIcon, UserIcon } from './Icons'
 import ThemeToggle from './ThemeToggle'
 
 const navItems = [
-  { to: '/swipe', label: 'Scopri', icon: HomeIcon },
+  { to: '/swipe', label: 'Scopri', icon: CompassIcon },
   { to: '/preferiti', label: 'Salvati', icon: HeartIcon },
+  { to: '/cerca', label: 'Cerca', icon: SearchIcon },
   { to: '/profile', label: 'Profilo', icon: UserIcon },
 ]
 
@@ -14,16 +15,12 @@ export default function AppShell({
   rightSlot,
   children,
   showNav = true,
+  showThemeToggle = true,
   bodyClassName = '',
+  shellClassName = '',
 }) {
-  const location = useLocation()
-  const activeIndex = Math.max(
-    0,
-    navItems.findIndex((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)),
-  )
-
   return (
-    <div className="screen-shell">
+    <div className={`screen-shell${shellClassName ? ` ${shellClassName}` : ''}`}>
       <div className="phone-frame">
         <header className="topbar">
           <div className="topbar__inner">
@@ -33,7 +30,7 @@ export default function AppShell({
             <div className="topbar__title">{title}</div>
             <div className="topbar__side topbar__side--right">
               {rightSlot}
-              <ThemeToggle compact />
+              {showThemeToggle && <ThemeToggle compact />}
             </div>
           </div>
         </header>
@@ -44,8 +41,7 @@ export default function AppShell({
 
         {showNav && (
           <nav className="bottom-nav" aria-label="Navigazione principale">
-            <div className="bottom-nav__inner" style={{ '--nav-index': activeIndex }}>
-              <span className="bottom-nav__thumb" aria-hidden="true" />
+            <div className="bottom-nav__inner">
               {navItems.map((item) => {
                 const Icon = item.icon
 

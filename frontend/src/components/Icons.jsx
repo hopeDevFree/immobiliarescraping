@@ -29,6 +29,25 @@ export function SlidersIcon(props) {
   )
 }
 
+export function SearchIcon(props) {
+  return (
+    <IconBase {...props}>
+      <circle cx="11" cy="11" r="5.75" />
+      <path d="m16 16 4.25 4.25" />
+    </IconBase>
+  )
+}
+
+export function CompassIcon(props) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="m9 15 1.95-5.05L16 8l-1.95 5.05Z" />
+      <path d="m10.95 9.95 2.1 2.1" />
+    </IconBase>
+  )
+}
+
 export function HomeIcon(props) {
   return (
     <IconBase {...props}>
@@ -169,6 +188,54 @@ export function RefreshIcon(props) {
     <IconBase {...props}>
       <path d="M20 11a8 8 0 1 0 2.1 5.4" />
       <path d="M20 4v6h-6" />
+    </IconBase>
+  )
+}
+
+export function TrainIcon(props) {
+  return (
+    <IconBase {...props}>
+      <rect x="6.25" y="4.75" width="11.5" height="11" rx="2.5" />
+      <path d="M9 18.75 7.5 20.5" />
+      <path d="m15 18.75 1.5 1.75" />
+      <path d="M8.5 15.75h7" />
+      <path d="M9 8.5h.01" />
+      <path d="M15 8.5h.01" />
+      <path d="M8.25 11.5h7.5" />
+    </IconBase>
+  )
+}
+
+export function TreeIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 4.5 6.5 11h3l-3 4.5h4V19.5" />
+      <path d="m12 4.5 5.5 6.5h-3l3 4.5h-4V19.5" />
+      <path d="M9.5 19.5h5" />
+    </IconBase>
+  )
+}
+
+export function PhotoStackIcon(props) {
+  return (
+    <IconBase {...props}>
+      <rect x="8" y="7.5" width="10" height="8.5" rx="2" />
+      <path d="M13 11.25 15 13.5l1.5-1.75L18 13.5" />
+      <circle cx="11" cy="10.5" r="0.8" fill="currentColor" stroke="none" />
+      <path d="M6 15.25h-.5A1.75 1.75 0 0 1 3.75 13.5v-5A1.75 1.75 0 0 1 5.5 6.75H14" />
+    </IconBase>
+  )
+}
+
+export function PdfIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M9 4.75h5.75L18 8v11.25H9A2.25 2.25 0 0 1 6.75 17V7A2.25 2.25 0 0 1 9 4.75Z" />
+      <path d="M14.75 4.75V8H18" />
+      <path d="M9.75 14.5h1.2a1.15 1.15 0 1 0 0-2.3h-1.2v4.05" />
+      <path d="M13.2 16.25h1.2a1.65 1.65 0 1 0 0-3.3h-1.2v3.3Z" />
+      <path d="M16.7 16.25V13h1.8" />
+      <path d="M16.7 14.7h1.5" />
     </IconBase>
   )
 }
