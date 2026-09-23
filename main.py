@@ -23,7 +23,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 # =========================================================
 # DATABASE
 # =========================================================
@@ -181,7 +180,6 @@ def find_values(data, wanted_keys):
     elif isinstance(data, list):
 
         for item in data:
-
             found.extend(
                 find_values(
                     item,
@@ -266,8 +264,8 @@ def get_advertiser_status(result):
     for _, value in agency_values:
 
         if (
-            isinstance(value, str)
-            and value.strip()
+                isinstance(value, str)
+                and value.strip()
         ):
             return "professional"
 
@@ -286,8 +284,8 @@ def get_agency_name(result):
     for _, value in values:
 
         if (
-            isinstance(value, str)
-            and value.strip()
+                isinstance(value, str)
+                and value.strip()
         ):
             return value.strip()
 
@@ -306,14 +304,14 @@ def parse_money(value):
     """
 
     if isinstance(
-        value,
-        (int, float),
+            value,
+            (int, float),
     ):
         return float(value)
 
     if not isinstance(
-        value,
-        str,
+            value,
+            str,
     ):
         return None
 
@@ -383,14 +381,14 @@ def get_surface(result):
     for _, value in values:
 
         if isinstance(
-            value,
-            (int, float),
+                value,
+                (int, float),
         ):
             return int(value)
 
         if isinstance(
-            value,
-            str,
+                value,
+                str,
         ):
 
             match = re.search(
@@ -426,7 +424,6 @@ def format_euro(value):
 # =========================================================
 
 async def scrape():
-
     logger.info(
         "================================================="
     )
@@ -466,8 +463,8 @@ async def scrape():
         already_seen_results = 0
 
         async with httpx.AsyncClient(
-            timeout=20,
-            follow_redirects=True,
+                timeout=20,
+                follow_redirects=True,
         ) as client:
 
             while current_page < max_pages:
@@ -493,6 +490,16 @@ async def scrape():
                     "Immobiliare.it HTTP %s",
                     response.status_code,
                 )
+
+                if response.status_code == 403:
+                    logger.error(
+                        "Immobiliare.it ha risposto 403\n"
+                        "Headers risposta: %s\n"
+                        "Body risposta: %s",
+                        dict(response.headers),
+                        response.text[:2000],
+                    )
+                    return
 
                 response.raise_for_status()
 
@@ -530,7 +537,6 @@ async def scrape():
                     )
 
                     if not properties:
-
                         logger.warning(
                             "Annuncio senza properties"
                         )
@@ -544,7 +550,6 @@ async def scrape():
                     )
 
                     if id_result is None:
-
                         logger.warning(
                             "Annuncio senza ID"
                         )
@@ -561,7 +566,6 @@ async def scrape():
                     )
 
                     if cur.fetchone() is not None:
-
                         already_seen_results += 1
 
                         logger.debug(
@@ -582,7 +586,6 @@ async def scrape():
                     )
 
                     if advertiser_status == "private":
-
                         private_results += 1
 
                         logger.info(
@@ -628,7 +631,6 @@ async def scrape():
                     )
 
                     if price is None:
-
                         logger.warning(
                             "Annuncio %s senza prezzo",
                             id_result,
@@ -650,7 +652,6 @@ async def scrape():
                         continue
 
                     if price > 700:
-
                         over_budget_results += 1
 
                         logger.info(
@@ -675,8 +676,8 @@ async def scrape():
                     known_monthly_cost = price
 
                     if (
-                        condominium_expenses
-                        is not None
+                            condominium_expenses
+                            is not None
                     ):
 
                         known_monthly_cost += (
@@ -684,7 +685,6 @@ async def scrape():
                         )
 
                         if known_monthly_cost > 700:
-
                             over_budget_results += 1
 
                             logger.info(
@@ -717,7 +717,6 @@ async def scrape():
                     url_image = None
 
                     if photo:
-
                         url_image = (
                             photo
                             .get("urls", {})
@@ -729,8 +728,8 @@ async def scrape():
                     # -------------------------------------
 
                     if (
-                        advertiser_status
-                        == "professional"
+                            advertiser_status
+                            == "professional"
                     ):
 
                         advertiser_text = (
@@ -744,12 +743,11 @@ async def scrape():
                         )
 
                     if agency_name:
-
                         advertiser_text += (
-                            " — "
-                            + html.escape(
-                                agency_name
-                            )
+                                " — "
+                                + html.escape(
+                            agency_name
+                        )
                         )
 
                     # -------------------------------------
@@ -757,8 +755,8 @@ async def scrape():
                     # -------------------------------------
 
                     if (
-                        condominium_expenses
-                        is not None
+                            condominium_expenses
+                            is not None
                     ):
 
                         expenses_text = (
@@ -799,7 +797,6 @@ async def scrape():
                     image_html = ""
 
                     if url_image:
-
                         image_html = (
                             f'<a href="{url_image}">'
                             "🏠"
@@ -988,8 +985,8 @@ scheduler.add_job(
     "interval",
     minutes=10,
     next_run_time=(
-        datetime.now()
-        + timedelta(seconds=30)
+            datetime.now()
+            + timedelta(seconds=30)
     ),
 )
 
@@ -999,13 +996,11 @@ logger.info(
     "Scheduler avviato: scrape ogni 10 minuti"
 )
 
-
 # =========================================================
 # KEEP ALIVE
 # =========================================================
 
 keep_alive()
-
 
 # =========================================================
 # START TELEGRAM
