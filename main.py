@@ -1,5 +1,6 @@
 import asyncio
 import html
+import logging
 import os
 import re
 from datetime import datetime, timedelta
@@ -14,6 +15,14 @@ from pyrogram import Client
 from keep_alive import keep_alive
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+)
+
+logger = logging.getLogger(__name__)
+
 
 # =========================================================
 # DATABASE
@@ -46,15 +55,40 @@ SELECT_ANNUNCIO = """
 
 app = Client(
     name=os.getenv("client_name"),
-    api_id=os.getenv("api_id"),
+    api_id=int(os.getenv("api_id")),
     api_hash=os.getenv("api_hash"),
     bot_token=os.getenv("bot_token"),
 )
 
 CHAT_ID = int(os.getenv("chat_id"))
 
+
+async def send_telegram_message(text):
+    """
+    Prova a inviare un messaggio Telegram.
+
+    Se Telegram non funziona, l'errore viene scritto nei log
+    senza interrompere il resto del bot.
+    """
+
+    try:
+        await app.send_message(
+            chat_id=CHAT_ID,
+            text=text,
+        )
+
+        return True
+
+    except Exception:
+        logger.exception(
+            "Impossibile inviare il messaggio Telegram"
+        )
+
+        return False
+
+
 # =========================================================
-# RICERCA IMMOBILIARE.IT
+# IMMOBILIARE.IT
 # =========================================================
 
 URL_RICERCA_CASE = (
@@ -62,27 +96,28 @@ URL_RICERCA_CASE = (
 )
 
 SEARCH_PARAMS = {
-    # 5 km dal nostro riferimento a Volla
+    # Raggio: 5 km
     "raggio": 5000,
     "centro": "40.87414,14.34105",
 
     # Affitto
     "idContratto": 2,
 
-    # Residenziale
+    # Immobili residenziali
     "idCategoria": 1,
 
-    # Massimo 700 € di canone pubblicizzato
+    # Massimo 700 € di canone
     "prezzoMassimo": 700,
 
     # Arredato
     "arredato": "on",
 
-    # Più recenti
+    # Annunci più recenti
     "criterio": "data",
     "ordine": "desc",
 
     "__lang": "it",
+
     "path": "/affitto-case/",
 }
 
@@ -100,14 +135,26 @@ HEADERS = {
 # =========================================================
 
 def normalize_key(key):
-    return str(key).replace("_", "").replace("-", "").lower()
+    return (
+        str(key)
+        .replace("_", "")
+        .replace("-", "")
+        .lower()
+    )
 
 
 def find_values(data, wanted_keys):
     """
-    Cerca ricorsivamente determinate chiavi all'interno del JSON.
-    Restituisce [(chiave, valore), ...].
+    Cerca ricorsivamente determinate chiavi
+    all'interno di un dict/list JSON.
+
+    Restituisce una lista:
+    [
+        (chiave, valore),
+        ...
+    ]
     """
+
     wanted = {
         normalize_key(key)
         for key in wanted_keys
@@ -116,18 +163,30 @@ def find_values(data, wanted_keys):
     found = []
 
     if isinstance(data, dict):
+
         for key, value in data.items():
+
             if normalize_key(key) in wanted:
-                found.append((key, value))
+                found.append(
+                    (key, value)
+                )
 
             found.extend(
-                find_values(value, wanted_keys)
+                find_values(
+                    value,
+                    wanted_keys,
+                )
             )
 
     elif isinstance(data, list):
+
         for item in data:
+
             found.extend(
-                find_values(item, wanted_keys)
+                find_values(
+                    item,
+                    wanted_keys,
+                )
             )
 
     return found
@@ -136,35 +195,39 @@ def find_values(data, wanted_keys):
 def get_advertiser_status(result):
     """
     Restituisce:
-    - private
-    - professional
-    - unknown
+
+    private
+    professional
+    unknown
     """
 
-    # Campo più affidabile quando presente
     private_values = find_values(
         result,
-        {"isPrivate", "ownerDirect"}
+        {
+            "isPrivate",
+            "ownerDirect",
+        },
     )
 
     for _, value in private_values:
+
         if value is True:
             return "private"
 
         if value is False:
             return "professional"
 
-    # Altri possibili indicatori
     type_values = find_values(
         result,
         {
             "advertiserType",
             "agencyType",
             "clientType",
-        }
+        },
     )
 
     for _, value in type_values:
+
         if not isinstance(value, str):
             continue
 
@@ -191,19 +254,21 @@ def get_advertiser_status(result):
         }:
             return "professional"
 
-    # Se esiste chiaramente un nome agenzia,
-    # possiamo considerarlo professionale
     agency_values = find_values(
         result,
         {
             "agencyName",
             "agency",
             "officeName",
-        }
+        },
     )
 
     for _, value in agency_values:
-        if isinstance(value, str) and value.strip():
+
+        if (
+            isinstance(value, str)
+            and value.strip()
+        ):
             return "professional"
 
     return "unknown"
@@ -215,11 +280,15 @@ def get_agency_name(result):
         {
             "agencyName",
             "officeName",
-        }
+        },
     )
 
     for _, value in values:
-        if isinstance(value, str) and value.strip():
+
+        if (
+            isinstance(value, str)
+            and value.strip()
+        ):
             return value.strip()
 
     return None
@@ -227,17 +296,25 @@ def get_agency_name(result):
 
 def parse_money(value):
     """
-    Converte ad esempio:
+    Converte valori come:
+
     100
     "100"
     "€ 100/mese"
+
     in float.
     """
 
-    if isinstance(value, (int, float)):
+    if isinstance(
+        value,
+        (int, float),
+    ):
         return float(value)
 
-    if not isinstance(value, str):
+    if not isinstance(
+        value,
+        str,
+    ):
         return None
 
     cleaned = (
@@ -248,25 +325,25 @@ def parse_money(value):
 
     match = re.search(
         r"(\d+(?:\.\d+)?)",
-        cleaned
+        cleaned,
     )
 
     if not match:
         return None
 
     try:
-        return float(match.group(1))
+        return float(
+            match.group(1)
+        )
+
     except ValueError:
         return None
 
 
 def get_condominium_expenses(result):
     """
-    Cerca solo campi esplicitamente riferiti
-    alle spese condominiali.
-
-    Non usiamo una generica chiave 'expenses'
-    perché potrebbe indicare altro.
+    Cerca eventuali spese condominiali
+    dichiarate nel JSON.
     """
 
     values = find_values(
@@ -276,10 +353,11 @@ def get_condominium_expenses(result):
             "condominiumExpense",
             "monthlyCondominiumExpenses",
             "speseCondominiali",
-        }
+        },
     )
 
     for _, value in values:
+
         parsed = parse_money(value)
 
         if parsed is not None:
@@ -289,24 +367,41 @@ def get_condominium_expenses(result):
 
 
 def get_surface(result):
+    """
+    Cerca la superficie dell'immobile.
+    """
+
     values = find_values(
         result,
         {
             "surfaceValue",
             "surface",
             "surfaceM2",
-        }
+        },
     )
 
     for _, value in values:
-        if isinstance(value, (int, float)):
+
+        if isinstance(
+            value,
+            (int, float),
+        ):
             return int(value)
 
-        if isinstance(value, str):
-            match = re.search(r"(\d+)", value)
+        if isinstance(
+            value,
+            str,
+        ):
+
+            match = re.search(
+                r"(\d+)",
+                value,
+            )
 
             if match:
-                return int(match.group(1))
+                return int(
+                    match.group(1)
+                )
 
     return None
 
@@ -315,10 +410,15 @@ def format_euro(value):
     if value is None:
         return "N/D"
 
-    if float(value).is_integer():
+    value = float(value)
+
+    if value.is_integer():
         return f"{int(value)} €"
 
-    return f"{value:.2f} €".replace(".", ",")
+    return (
+        f"{value:.2f} €"
+        .replace(".", ",")
+    )
 
 
 # =========================================================
@@ -326,34 +426,72 @@ def format_euro(value):
 # =========================================================
 
 async def scrape():
-    conn = connection_pool.getconn()
+
+    logger.info(
+        "================================================="
+    )
+
+    logger.info(
+        "Inizio ricerca case"
+    )
+
+    conn = None
 
     try:
+
+        # -------------------------------------------------
+        # DATABASE CONNECTION
+        # -------------------------------------------------
+
+        conn = connection_pool.getconn()
+
         cur = conn.cursor()
 
-        await app.send_message(
-            chat_id=CHAT_ID,
-            text="🔎 Inizio ricerca case...",
+        logger.info(
+            "Connessione database ottenuta"
+        )
+
+        # Telegram è solo informativo.
+        await send_telegram_message(
+            "🔎 Inizio ricerca case..."
         )
 
         current_page = 0
         max_pages = 1
 
+        total_results = 0
+        new_results = 0
+        private_results = 0
+        over_budget_results = 0
+        already_seen_results = 0
+
         async with httpx.AsyncClient(
-                timeout=20,
-                follow_redirects=True,
+            timeout=20,
+            follow_redirects=True,
         ) as client:
 
             while current_page < max_pages:
+
                 current_page += 1
 
+                logger.info(
+                    "Richiesta pagina %s",
+                    current_page,
+                )
+
                 params = SEARCH_PARAMS.copy()
+
                 params["pag"] = current_page
 
                 response = await client.get(
                     URL_RICERCA_CASE,
                     params=params,
                     headers=HEADERS,
+                )
+
+                logger.info(
+                    "Immobiliare.it HTTP %s",
+                    response.status_code,
                 )
 
                 response.raise_for_status()
@@ -365,30 +503,57 @@ async def scrape():
                     1,
                 )
 
-                for result in data.get("results", []):
+                results = data.get(
+                    "results",
+                    [],
+                )
+
+                logger.info(
+                    "Pagina %s/%s - %s annunci",
+                    current_page,
+                    max_pages,
+                    len(results),
+                )
+
+                for result in results:
+
+                    total_results += 1
+
                     real_estate = result.get(
                         "realEstate",
-                        {}
+                        {},
                     )
 
                     properties = real_estate.get(
                         "properties",
-                        []
+                        [],
                     )
 
                     if not properties:
+
+                        logger.warning(
+                            "Annuncio senza properties"
+                        )
+
                         continue
 
                     property_data = properties[0]
 
-                    id_result = real_estate.get("id")
+                    id_result = real_estate.get(
+                        "id"
+                    )
 
                     if id_result is None:
+
+                        logger.warning(
+                            "Annuncio senza ID"
+                        )
+
                         continue
 
-                    # ---------------------------
-                    # Già visto?
-                    # ---------------------------
+                    # -------------------------------------
+                    # GIÀ VISTO?
+                    # -------------------------------------
 
                     cur.execute(
                         SELECT_ANNUNCIO,
@@ -396,30 +561,52 @@ async def scrape():
                     )
 
                     if cur.fetchone() is not None:
+
+                        already_seen_results += 1
+
+                        logger.debug(
+                            "Annuncio %s già visto",
+                            id_result,
+                        )
+
                         continue
 
-                    # ---------------------------
-                    # Inserzionista
-                    # ---------------------------
+                    # -------------------------------------
+                    # INSERZIONISTA
+                    # -------------------------------------
 
                     advertiser_status = (
-                        get_advertiser_status(result)
+                        get_advertiser_status(
+                            result
+                        )
                     )
 
-                    # Se siamo sicuri che sia privato,
-                    # non lo vogliamo.
                     if advertiser_status == "private":
+
+                        private_results += 1
+
+                        logger.info(
+                            "Annuncio %s scartato: privato",
+                            id_result,
+                        )
+
                         continue
 
-                    # ---------------------------
-                    # Informazioni base
-                    # ---------------------------
+                    # -------------------------------------
+                    # URL + TITOLO
+                    # -------------------------------------
 
-                    seo = result.get("seo", {})
+                    seo = result.get(
+                        "seo",
+                        {},
+                    )
 
                     url_result = seo.get(
                         "url",
-                        f"https://www.immobiliare.it/annunci/{id_result}/",
+                        (
+                            "https://www.immobiliare.it/"
+                            f"annunci/{id_result}/"
+                        ),
                     )
 
                     title = seo.get(
@@ -427,162 +614,362 @@ async def scrape():
                         "Annuncio Immobiliare.it",
                     )
 
+                    # -------------------------------------
+                    # PREZZO
+                    # -------------------------------------
+
                     price_data = property_data.get(
                         "price",
-                        {}
+                        {},
                     )
 
-                    price = price_data.get("value")
+                    price = price_data.get(
+                        "value"
+                    )
 
                     if price is None:
+
+                        logger.warning(
+                            "Annuncio %s senza prezzo",
+                            id_result,
+                        )
+
                         continue
 
-                    # Sicurezza aggiuntiva
+                    try:
+                        price = float(price)
+
+                    except (TypeError, ValueError):
+
+                        logger.warning(
+                            "Prezzo non valido per annuncio %s: %s",
+                            id_result,
+                            price,
+                        )
+
+                        continue
+
                     if price > 700:
+
+                        over_budget_results += 1
+
+                        logger.info(
+                            "Annuncio %s scartato: "
+                            "prezzo %s €",
+                            id_result,
+                            price,
+                        )
+
                         continue
 
-                    # ---------------------------
-                    # Spese
-                    # ---------------------------
+                    # -------------------------------------
+                    # SPESE CONDOMINIALI
+                    # -------------------------------------
 
                     condominium_expenses = (
-                        get_condominium_expenses(result)
+                        get_condominium_expenses(
+                            result
+                        )
                     )
 
                     known_monthly_cost = price
 
-                    if condominium_expenses is not None:
+                    if (
+                        condominium_expenses
+                        is not None
+                    ):
+
                         known_monthly_cost += (
                             condominium_expenses
                         )
 
-                        # Se già canone + condominio
-                        # supera il nostro limite,
-                        # possiamo eliminarlo.
                         if known_monthly_cost > 700:
+
+                            over_budget_results += 1
+
+                            logger.info(
+                                "Annuncio %s scartato: "
+                                "totale noto %s €",
+                                id_result,
+                                known_monthly_cost,
+                            )
+
                             continue
 
-                    # ---------------------------
-                    # Altri dati
-                    # ---------------------------
+                    # -------------------------------------
+                    # DATI EXTRA
+                    # -------------------------------------
 
-                    surface = get_surface(result)
-                    agency_name = get_agency_name(result)
+                    surface = get_surface(
+                        result
+                    )
 
-                    photo = property_data.get("photo")
+                    agency_name = (
+                        get_agency_name(
+                            result
+                        )
+                    )
+
+                    photo = property_data.get(
+                        "photo"
+                    )
+
+                    url_image = None
 
                     if photo:
+
                         url_image = (
                             photo
                             .get("urls", {})
                             .get("medium")
                         )
-                    else:
-                        url_image = None
 
-                    # ---------------------------
-                    # Testo inserzionista
-                    # ---------------------------
+                    # -------------------------------------
+                    # INSERZIONISTA TELEGRAM
+                    # -------------------------------------
 
-                    if advertiser_status == "professional":
-                        advertiser_text = "🏢 Professionista / agenzia"
+                    if (
+                        advertiser_status
+                        == "professional"
+                    ):
+
+                        advertiser_text = (
+                            "🏢 Professionista / agenzia"
+                        )
+
                     else:
+
                         advertiser_text = (
                             "⚠️ Inserzionista da verificare"
                         )
 
                     if agency_name:
+
                         advertiser_text += (
-                            f" — {html.escape(agency_name)}"
+                            " — "
+                            + html.escape(
+                                agency_name
+                            )
                         )
 
-                    # ---------------------------
-                    # Testo spese
-                    # ---------------------------
+                    # -------------------------------------
+                    # SPESE TELEGRAM
+                    # -------------------------------------
 
-                    if condominium_expenses is not None:
+                    if (
+                        condominium_expenses
+                        is not None
+                    ):
+
                         expenses_text = (
-                            f"🏢 <b>Condominio:</b> "
-                            f"{format_euro(condominium_expenses)}/mese\n"
-                            f"💰 <b>Totale noto:</b> "
-                            f"{format_euro(known_monthly_cost)}/mese"
+                            "🏢 <b>Condominio:</b> "
+                            f"{format_euro(condominium_expenses)}"
+                            "/mese\n"
+                            "💰 <b>Totale noto:</b> "
+                            f"{format_euro(known_monthly_cost)}"
+                            "/mese"
                         )
+
                     else:
+
                         expenses_text = (
                             "⚠️ <b>Spese condominiali:</b> "
                             "non determinate"
                         )
 
-                    # ---------------------------
-                    # Superficie
-                    # ---------------------------
+                    # -------------------------------------
+                    # SUPERFICIE
+                    # -------------------------------------
 
                     if surface is not None:
+
                         surface_text = (
-                            f"📐 <b>Superficie:</b> "
+                            "📐 <b>Superficie:</b> "
                             f"{surface} m²\n"
                         )
+
                     else:
+
                         surface_text = ""
 
-                    # ---------------------------
-                    # Immagine
-                    # ---------------------------
+                    # -------------------------------------
+                    # IMMAGINE
+                    # -------------------------------------
 
                     image_html = ""
 
                     if url_image:
+
                         image_html = (
-                            f'<a href="{url_image}">🏠</a> '
+                            f'<a href="{url_image}">'
+                            "🏠"
+                            "</a> "
                         )
 
-                    # ---------------------------
-                    # Telegram
-                    # ---------------------------
+                    # -------------------------------------
+                    # MESSAGGIO
+                    # -------------------------------------
 
                     message = (
                         f"{image_html}"
                         f"<b>{html.escape(title)}</b>\n\n"
-                        f"💶 <b>Canone:</b> "
+                        "💶 <b>Canone:</b> "
                         f"{format_euro(price)}/mese\n"
                         f"{surface_text}"
                         f"{expenses_text}\n\n"
                         f"{advertiser_text}\n\n"
-                        f'🔗 <b><a href="{url_result}">'
-                        f"Apri annuncio"
-                        f"</a></b>"
+                        f'<b><a href="{url_result}">'
+                        "🔗 Apri annuncio"
+                        "</a></b>"
                     )
 
-                    await app.send_message(
-                        chat_id=CHAT_ID,
-                        text=message,
+                    # -------------------------------------
+                    # LOG SERVER
+                    # -------------------------------------
+
+                    logger.info(
+                        "NUOVO ANNUNCIO | "
+                        "id=%s | "
+                        "prezzo=%s | "
+                        "superficie=%s | "
+                        "inserzionista=%s | "
+                        "agenzia=%s | "
+                        "url=%s",
+                        id_result,
+                        price,
+                        surface,
+                        advertiser_status,
+                        agency_name,
+                        url_result,
                     )
 
-                    # Lo salviamo solo dopo
-                    # aver mandato correttamente
-                    # la notifica.
+                    # -------------------------------------
+                    # TELEGRAM
+                    # -------------------------------------
+
+                    telegram_sent = (
+                        await send_telegram_message(
+                            message
+                        )
+                    )
+
+                    if telegram_sent:
+
+                        logger.info(
+                            "Notifica Telegram inviata "
+                            "per annuncio %s",
+                            id_result,
+                        )
+
+                    else:
+
+                        logger.warning(
+                            "Notifica Telegram NON inviata "
+                            "per annuncio %s",
+                            id_result,
+                        )
+
+                    # -------------------------------------
+                    # DATABASE
+                    # -------------------------------------
+
                     cur.execute(
                         INSERT_ANNUNCIO,
                         (id_result,),
                     )
 
-                    await asyncio.sleep(0.5)
+                    conn.commit()
 
-        conn.commit()
+                    new_results += 1
 
-    except Exception as e:
-        conn.rollback()
+                    logger.info(
+                        "Annuncio %s salvato nel database",
+                        id_result,
+                    )
 
-        await app.send_message(
-            chat_id=CHAT_ID,
-            text=(
-                "❌ Errore durante lo scrape:\n"
-                f"<code>{html.escape(str(e))}</code>"
-            ),
+                    await asyncio.sleep(
+                        0.5
+                    )
+
+        # -------------------------------------------------
+        # RISULTATO SCRAPE
+        # -------------------------------------------------
+
+        logger.info(
+            "Scrape completato | "
+            "totali=%s | "
+            "nuovi=%s | "
+            "già_visti=%s | "
+            "privati=%s | "
+            "fuori_budget=%s",
+            total_results,
+            new_results,
+            already_seen_results,
+            private_results,
+            over_budget_results,
         )
 
+        await send_telegram_message(
+            "✅ Ricerca completata\n\n"
+            f"🏠 Nuovi annunci: {new_results}"
+        )
+
+    # =====================================================
+    # ERRORE GENERALE
+    # =====================================================
+
+    except Exception as e:
+
+        if conn is not None:
+
+            try:
+                conn.rollback()
+
+            except Exception:
+                logger.exception(
+                    "Errore durante rollback database"
+                )
+
+        logger.exception(
+            "Errore durante lo scrape"
+        )
+
+        await send_telegram_message(
+            "❌ Errore durante lo scrape:\n"
+            f"<code>{html.escape(str(e))}</code>"
+        )
+
+    # =====================================================
+    # CLEANUP
+    # =====================================================
+
     finally:
-        connection_pool.putconn(conn)
+
+        if conn is not None:
+
+            try:
+
+                connection_pool.putconn(
+                    conn
+                )
+
+                logger.info(
+                    "Connessione database restituita al pool"
+                )
+
+            except Exception:
+
+                logger.exception(
+                    "Errore restituendo la connessione al pool"
+                )
+
+        logger.info(
+            "Fine ciclo scrape"
+        )
+
+        logger.info(
+            "================================================="
+        )
 
 
 # =========================================================
@@ -601,13 +988,31 @@ scheduler.add_job(
     "interval",
     minutes=10,
     next_run_time=(
-            datetime.now()
-            + timedelta(seconds=30)
+        datetime.now()
+        + timedelta(seconds=30)
     ),
 )
 
 scheduler.start()
 
+logger.info(
+    "Scheduler avviato: scrape ogni 10 minuti"
+)
+
+
+# =========================================================
+# KEEP ALIVE
+# =========================================================
+
 keep_alive()
+
+
+# =========================================================
+# START TELEGRAM
+# =========================================================
+
+logger.info(
+    "Avvio client Telegram"
+)
 
 app.run()
