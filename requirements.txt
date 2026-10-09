@@ -7,3 +7,4 @@ python-dotenv
 flask
 psycopg2
 geopy
+playwright

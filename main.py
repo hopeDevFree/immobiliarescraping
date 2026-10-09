@@ -980,21 +980,76 @@ scheduler = AsyncIOScheduler(
     event_loop=loop,
 )
 
+
+async def test_playwright():
+    import json
+    from playwright.async_api import async_playwright, TimeoutError
+
+    logger.info("TEST PLAYWRIGHT | avvio")
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+
+            try:
+                page = await browser.new_page()
+
+                response = await page.goto(
+                    "https://www.immobiliare.it/affitto-case/caserta/",
+                    wait_until="domcontentloaded",
+                    timeout=30000,
+                )
+
+                status = response.status if response else None
+                logger.info("TEST PLAYWRIGHT | HTTP %s", status)
+
+                if status != 200:
+                    logger.error(
+                        "TEST PLAYWRIGHT | pagina non accessibile"
+                    )
+                    return
+
+                node = page.locator("#__NEXT_DATA__")
+                await node.wait_for(state="attached", timeout=10000)
+
+                data = json.loads(await node.text_content())
+                queries = data["props"]["pageProps"]["dehydratedState"]["queries"]
+
+                counts = [
+                    len(q["state"]["data"]["results"])
+                    for q in queries
+                    if isinstance(q.get("state", {}).get("data"), dict)
+                       and isinstance(q["state"]["data"].get("results"), list)
+                ]
+
+                logger.info(
+                    "TEST PLAYWRIGHT | annunci caricati: %s",
+                    sum(counts),
+                )
+                logger.info(
+                    "TEST PLAYWRIGHT | titolo: %s",
+                    await page.title(),
+                )
+
+            finally:
+                await browser.close()
+
+    except TimeoutError:
+        logger.exception("TEST PLAYWRIGHT | timeout")
+    except Exception:
+        logger.exception("TEST PLAYWRIGHT | errore")
+
+
 scheduler.add_job(
-    scrape,
-    "interval",
-    minutes=10,
-    next_run_time=(
-            datetime.now()
-            + timedelta(seconds=30)
-    ),
+    test_playwright,
+    "date",
+    run_date=datetime.now(scheduler.timezone) + timedelta(seconds=30),
 )
 
 scheduler.start()
 
 logger.info(
-    "Scheduler avviato: scrape ogni 10 minuti"
-)
+    "Scheduler avviato: singolo test Playwright")
 
 # =========================================================
 # KEEP ALIVE

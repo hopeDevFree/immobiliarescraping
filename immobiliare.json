@@ -1,0 +1,3647 @@
+{
+  "count": 14,
+  "totalAds": 14,
+  "isResultsLimitReached": false,
+  "results": [
+    {
+      "realEstate": {
+        "dataType": "list-real-estate",
+        "id": 132460566,
+        "uuid": "d98959c1-f4f0-53b4-b6a6-481299ac5409",
+        "advertiser": {
+          "supervisor": {
+            "type": "user",
+            "imageGender": "male",
+            "phones": [],
+            "imageType": "user",
+            "label": "privato"
+          },
+          "hasCallNumbers": false
+        },
+        "contract": "rent",
+        "isNew": true,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 550,
+          "formattedValue": "€ 550/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 2005397454,
+                  "caption": "",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2005397454/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 2005397762,
+                  "caption": "",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2005397762/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": true,
+            "floor": {
+              "abbreviation": "1",
+              "value": "1°",
+              "floorOnlyValue": "1",
+              "ga4FloorValue": "1"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 550,
+              "formattedValue": "€ 550/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "2",
+            "surface": "50 m²",
+            "typology": {
+              "id": 14,
+              "name": "Appartamento"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "cucina",
+              "balcone",
+              "arredato"
+            ],
+            "ga4Heating": "Assente",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 2005397454,
+              "caption": "",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/2005397454/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/2005397454/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/2005397454/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Corso Ponticelli",
+              "latitude": 40.85249329,
+              "longitude": 14.33305645,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Barra, Ponticelli, San Giovanni a Teduccio",
+              "microzone": "Ponticelli",
+              "city": "Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "50 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano 1",
+                "compactLabel": "1"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale corso Ponticelli, Ponticelli, Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Appartamento"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale corso Ponticelli, Ponticelli, Napoli",
+        "url": "https://www.immobiliare.it/annunci/132460566/"
+      },
+      "idGeoHash": "sr60qhvp"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 132254366,
+        "uuid": "b91279fb-3688-5289-9c15-0a97dddebdfd",
+        "advertiser": {
+          "agency": {
+            "id": 2392,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4276"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": true
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "AG Iasevoli Immobiliare",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/695198583.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/695198585.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/2392/iasevoli-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 600,
+          "formattedValue": "€ 600/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 2006981516,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2006981516/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 2006981766,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2006981766/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 2006981794,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2006981794/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 2006981908,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2006981908/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 2006982068,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/2006982068/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "1",
+              "value": "1°",
+              "floorOnlyValue": "1",
+              "ga4FloorValue": "1"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 600,
+              "formattedValue": "€ 600/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "2",
+            "surface": "56 m²",
+            "typology": {
+              "id": 14,
+              "name": "Bilocale"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "videocitofono",
+              "porta blindata",
+              "esposizione esterna",
+              "armadio a muro",
+              "balcone",
+              "terrazzo",
+              "impianto tv con parabola satellitare",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "TAVERNANOVA CENTRO BILOCALE CON TERRAZZO",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 2006981516,
+              "caption": "Camera da letto",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/2006981516/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/2006981516/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/2006981516/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via Madre Rosa Gattorno",
+              "latitude": 40.904,
+              "longitude": 14.3555,
+              "marker": "only_area",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "56 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano 1",
+                "compactLabel": "1"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "terrace",
+                "label": "Terrazzo"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via Madre Rosa Gattorno, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Bilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via Madre Rosa Gattorno, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/132254366/"
+      },
+      "idGeoHash": "sr60wwu1"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 131403764,
+        "uuid": "f42db3ab-65a4-5989-8a2f-9f6f0861ce73",
+        "advertiser": {
+          "agency": {
+            "id": 2328,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 8890"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": true
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "Sogeim",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/922133887.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/922133889.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/2328/sogeim-volla/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 8890"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Romano Raffaele",
+            "label": "agente immobiliare"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 700,
+          "formattedValue": "€ 700/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1980098506,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098506/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098520,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098520/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098544,
+                  "caption": "Veranda",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098544/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098566,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098566/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098582,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098582/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098600,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098600/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098626,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098626/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098648,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098648/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098670,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098670/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098686,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098686/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098702,
+                  "caption": "Balcone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098702/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098714,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098714/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098730,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098730/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098742,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098742/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098750,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098750/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098760,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098760/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098766,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098766/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098778,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098778/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098786,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098786/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098794,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098794/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098802,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098802/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098818,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098818/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098830,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098830/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1980098840,
+                  "caption": "Posto macchina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1980098840/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [
+                null
+              ],
+              "hasMultimedia": true
+            },
+            "bathrooms": "2",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "4",
+              "value": "4°, con ascensore",
+              "floorOnlyValue": "4",
+              "ga4FloorValue": "4"
+            },
+            "ga4Condition": "Buono / Abitabile",
+            "price": {
+              "visible": true,
+              "value": 700,
+              "formattedValue": "€ 700/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "3",
+            "elevator": true,
+            "surface": "80 m²",
+            "typology": {
+              "id": 14,
+              "name": "Trilocale"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "views": [
+              {
+                "id": 5,
+                "name": "panoramica"
+              }
+            ],
+            "ga4features": [
+              "cancello elettrico",
+              "fibra ottica",
+              "impianto di allarme",
+              "porta blindata",
+              "accesso per disabili",
+              "balcone",
+              "impianto tv centralizzato",
+              "parzialmente arredato",
+              "cantina",
+              "esposizione doppia"
+            ],
+            "ga4Heating": "Autonomo",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1980098506,
+              "caption": "Salone",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1980098506/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1980098506/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1980098506/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "2",
+            "location": {
+              "address": "Via Roma",
+              "latitude": 40.9111,
+              "longitude": 14.3494,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "3 locali",
+                "compactLabel": "3"
+              },
+              {
+                "type": "surface",
+                "label": "80 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "2 bagni",
+                "compactLabel": "2"
+              },
+              {
+                "type": "floor",
+                "label": "Piano 4",
+                "compactLabel": "4"
+              },
+              {
+                "type": "elevator",
+                "label": "Ascensore",
+                "compactLabel": "Sì"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "furniture",
+                "label": "Parzialmente Arredato"
+              },
+              {
+                "type": "basement",
+                "label": "Cantina"
+              }
+            ]
+          }
+        ],
+        "title": "Trilocale via Roma, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Trilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Trilocale via Roma, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/131403764/"
+      },
+      "idGeoHash": "sr60wx8u"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 131285832,
+        "uuid": "82a7b81e-050d-5872-8b99-d9ceba3b0179",
+        "advertiser": {
+          "agency": {
+            "id": 13612,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.F. Studio Srl",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1138179528.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1138179530.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/13612/pf-studio-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Pelliccia Francesco",
+            "label": "agente immobiliare"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 500,
+          "formattedValue": "€ 500/mese",
+          "priceRange": "fino a 500 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1977397948,
+                  "caption": "Facciata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977397948/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414518,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414518/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414538,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414538/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414548,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414548/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414558,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414558/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414564,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414564/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414584,
+                  "caption": "Ascensori",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414584/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414594,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414594/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414610,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414610/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414622,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414622/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414636,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414636/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414652,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414652/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1977414658,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1977414658/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T",
+              "value": "Piano terra",
+              "floorOnlyValue": "piano terra",
+              "ga4FloorValue": "piano terra"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 500,
+              "formattedValue": "€ 500/mese",
+              "priceRange": "fino a 500 &euro;"
+            },
+            "rooms": "1",
+            "surface": "45 m²",
+            "typology": {
+              "id": 14,
+              "name": "Monolocale"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "porta blindata",
+              "esposizione interna",
+              "impianto tv con parabola satellitare",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "MONOLOCALE ARREDATO AL PIANO TERRA",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1977397948,
+              "caption": "Facciata",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1977397948/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1977397948/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1977397948/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Corso Umberto I",
+              "latitude": 40.9127,
+              "longitude": 14.3454,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "1 locale",
+                "compactLabel": "1"
+              },
+              {
+                "type": "surface",
+                "label": "45 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T",
+                "compactLabel": "T"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Monolocale corso Umberto I, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Monolocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Monolocale corso Umberto I, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/131285832/"
+      },
+      "idGeoHash": "sr60wryj"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 131132156,
+        "uuid": "3e9cd067-ef22-57ea-adc6-9de161e7f863",
+        "advertiser": {
+          "agency": {
+            "id": 58085,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4288"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": true
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "Direzione Casa",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/968390883.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/968390885.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/58085/direzione-casa-napoli/",
+            "showExternalLink": false
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 700,
+          "formattedValue": "€ 700/mese",
+          "loweredPrice": {
+            "originalPrice": "€ 790",
+            "currentPrice": "€ 700",
+            "discountPercentage": "11,4",
+            "priceDecreasedBy": "€ 90",
+            "passedDays": 12,
+            "date": "11/09/2026",
+            "typologiesCount": 0
+          },
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1973795842,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795842/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795856,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795856/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795858,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795858/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795862,
+                  "caption": "Interno palazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795862/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795870,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795870/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795876,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795876/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795884,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795884/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795890,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795890/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795896,
+                  "caption": "Balcone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795896/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795902,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795902/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795910,
+                  "caption": "Corridoio",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795910/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795916,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795916/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795920,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795920/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795926,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795926/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795928,
+                  "caption": "Corridoio",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795928/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795934,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795934/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795938,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795938/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795948,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795948/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795954,
+                  "caption": "Balcone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795954/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795958,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795958/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795962,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795962/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795970,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795970/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795972,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795972/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795980,
+                  "caption": "Ripostiglio",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795980/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795984,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795984/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1973795988,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1973795988/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [
+                null
+              ],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "2 - 3",
+              "value": "2 piani: da 2° a 3°",
+              "floorOnlyValue": "da 2 a 3",
+              "ga4FloorValue": "da 2 a 3"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 700,
+              "formattedValue": "€ 700/mese",
+              "loweredPrice": {
+                "originalPrice": "€ 790",
+                "currentPrice": "€ 700",
+                "discountPercentage": "11,4",
+                "priceDecreasedBy": "€ 90",
+                "passedDays": 12,
+                "date": "11/09/2026",
+                "typologiesCount": 1
+              },
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "3",
+            "surface": "93 m²",
+            "typology": {
+              "id": 14,
+              "name": "Trilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "porta blindata",
+              "esposizione esterna",
+              "balcone",
+              "impianto tv con parabola satellitare",
+              "parzialmente arredato"
+            ],
+            "ga4Heating": "Assente",
+            "caption": "VIA TADDEO DA SESSA",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1973795842,
+              "caption": "Zona",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1973795842/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1973795842/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1973795842/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "2",
+            "location": {
+              "address": "VIA TADDEO DA SESSA",
+              "latitude": 40.8561,
+              "longitude": 14.2879,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Zona Industriale, Centro Direzionale, Poggioreale",
+              "microzone": "Centro Direzionale",
+              "city": "Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "3 locali",
+                "compactLabel": "3"
+              },
+              {
+                "type": "surface",
+                "label": "93 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano 2 - 3",
+                "compactLabel": "2 - 3"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "furniture",
+                "label": "Parzialmente Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Trilocale via Taddeo Da Sessa, Centro Direzionale, Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Trilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Trilocale via Taddeo Da Sessa, Centro Direzionale, Napoli",
+        "url": "https://www.immobiliare.it/annunci/131132156/"
+      },
+      "idGeoHash": "sr60mjsh"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 129871348,
+        "uuid": "e75b65eb-e016-5a33-946f-2a56456d9098",
+        "advertiser": {
+          "agency": {
+            "id": 131661,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4143"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "IService",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/217910374.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/217910377.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/131661/iservice-pollena-trocchia/",
+            "showExternalLink": false
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 350,
+          "formattedValue": "€ 350/mese",
+          "priceRange": "fino a 500 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1943994250,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1943994250/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T",
+              "value": "Piano terra",
+              "floorOnlyValue": "piano terra",
+              "ga4FloorValue": "piano terra"
+            },
+            "ga4Condition": "Buono / Abitabile",
+            "price": {
+              "visible": true,
+              "value": 350,
+              "formattedValue": "€ 350/mese",
+              "priceRange": "fino a 500 &euro;"
+            },
+            "rooms": "1",
+            "surface": "40 m²",
+            "typology": {
+              "id": 14,
+              "name": "Monolocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "porta blindata",
+              "accesso per disabili",
+              "impianto tv con parabola satellitare",
+              "arredato",
+              "esposizione doppia"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "Monolocale arredato in fitto – Ideale per single o coppia",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1943994250,
+              "caption": "Zona",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1943994250/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1943994250/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1943994250/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Piazza Nicola Amodio",
+              "latitude": 40.8545,
+              "longitude": 14.3793,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Pollena Trocchia",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "1 locale",
+                "compactLabel": "1"
+              },
+              {
+                "type": "surface",
+                "label": "40 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T",
+                "compactLabel": "T"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Monolocale piazza Nicola Amodio 10, Centro, Pollena Trocchia",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Monolocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Monolocale piazza Nicola Amodio 10, Centro, Pollena Trocchia",
+        "url": "https://www.immobiliare.it/annunci/129871348/"
+      },
+      "idGeoHash": "sr60rjqd"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 129578672,
+        "uuid": "a3c7155a-bf92-51c9-886e-815f92a6ed05",
+        "advertiser": {
+          "agency": {
+            "id": 179871,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 8870"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": true
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "Simeoli Immobiliare",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1773420156.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1773420158.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/179871/simeoli-cercola/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 8870"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Giuseppe Simeoli",
+            "label": "agente immobiliare",
+            "imageUrl": "https://pic.im-cdn.it/agenti/222896/1773118978/80.jpg"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 450,
+          "formattedValue": "€ 450/mese",
+          "priceRange": "fino a 500 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1936615796,
+                  "caption": "Posto macchina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936615796/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936615892,
+                  "caption": "Interno non residenziale",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936615892/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936615916,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936615916/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936615936,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936615936/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936615820,
+                  "caption": "Posto macchina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936615820/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616066,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616066/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616134,
+                  "caption": "Facciata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616134/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616148,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616148/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616158,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616158/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616172,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616172/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616182,
+                  "caption": "Disimpegno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616182/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616254,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616254/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1936616280,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1936616280/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [
+                null
+              ],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "S",
+              "value": "Seminterrato",
+              "floorOnlyValue": "seminterrato",
+              "ga4FloorValue": "seminterrato"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 450,
+              "formattedValue": "€ 450/mese",
+              "priceRange": "fino a 500 &euro;"
+            },
+            "rooms": "1",
+            "surface": "25 m²",
+            "typology": {
+              "id": 14,
+              "name": "Monolocale"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "cancello elettrico",
+              "fibra ottica",
+              "videocitofono",
+              "porta blindata",
+              "esposizione interna",
+              "accesso per disabili",
+              "impianto tv centralizzato",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "FITTASI MONOLOCALE VIA LUCA GIORDANO SOLO DONNE",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1936615796,
+              "caption": "Posto macchina",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1936615796/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1936615796/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1936615796/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via Luca Giordano",
+              "latitude": 40.853,
+              "longitude": 14.3576,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Cercola",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "1 locale",
+                "compactLabel": "1"
+              },
+              {
+                "type": "surface",
+                "label": "25 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano S",
+                "compactLabel": "S"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Monolocale via Luca Giordano, Centro, Cercola",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Monolocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Monolocale via Luca Giordano, Centro, Cercola",
+        "url": "https://www.immobiliare.it/annunci/129578672/"
+      },
+      "idGeoHash": "sr60qtnc"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 129506072,
+        "uuid": "3cdaa68f-427d-543f-97f4-8506a4bcd336",
+        "advertiser": {
+          "agency": {
+            "id": 472832,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 5889"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": true
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "Professionecasa San Giovanni a Teduccio",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1934598712.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1934598714.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/472832/professionecasa-napoli-san-giovanni-a-teduccio/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1929 5889"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Vincenzo De Sena",
+            "label": "agente immobiliare",
+            "imageUrl": "https://pic.im-cdn.it/agenti/620096/1945373100/80.jpg"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 600,
+          "formattedValue": "€ 600/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1934840816,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840816/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840818,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840818/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840820,
+                  "caption": "Magazzino",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840820/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840822,
+                  "caption": "Altro",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840822/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840826,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840826/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840828,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840828/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840830,
+                  "caption": "Altro",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840830/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840832,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840832/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840834,
+                  "caption": "Altro",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840834/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840836,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840836/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840838,
+                  "caption": "Stanza non arredata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840838/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840842,
+                  "caption": "Vista",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840842/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840844,
+                  "caption": "Scala",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840844/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840846,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840846/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840848,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840848/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1934840850,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1934840850/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "2",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T",
+              "value": "Piano terra",
+              "floorOnlyValue": "piano terra",
+              "ga4FloorValue": "piano terra"
+            },
+            "ga4Condition": "Buono / Abitabile",
+            "price": {
+              "visible": true,
+              "value": 600,
+              "formattedValue": "€ 600/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "4",
+            "surface": "40 m²",
+            "typology": {
+              "id": 14,
+              "name": "Quadrilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "porta blindata",
+              "esposizione interna",
+              "impianto tv con parabola satellitare",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "Appartamento",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1934840816,
+              "caption": "Cucina",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1934840816/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1934840816/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1934840816/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "2",
+            "location": {
+              "address": "Via Bernardo Quaranta, 124",
+              "latitude": 40.8341,
+              "longitude": 14.321,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Barra, Ponticelli, San Giovanni a Teduccio",
+              "microzone": "Barra",
+              "city": "Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "4 locali",
+                "compactLabel": "4"
+              },
+              {
+                "type": "surface",
+                "label": "40 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "2 bagni",
+                "compactLabel": "2"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T",
+                "compactLabel": "T"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Quadrilocale via Bernardo Quaranta, 124, Barra, Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Quadrilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Quadrilocale via Bernardo Quaranta, 124, Barra, Napoli",
+        "url": "https://www.immobiliare.it/annunci/129506072/"
+      },
+      "idGeoHash": "sr60mcs5"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 121932080,
+        "uuid": "39401473-49a7-59ae-96e7-014c96737ede",
+        "advertiser": {
+          "agency": {
+            "id": 13612,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.F. Studio Srl",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1138179528.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1138179530.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/13612/pf-studio-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Pelliccia Francesco",
+            "label": "agente immobiliare"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 550,
+          "formattedValue": "€ 550/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1749499920,
+                  "caption": "Facciata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749499920/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504566,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504566/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504642,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504642/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504700,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504700/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504850,
+                  "caption": "Ufficio",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504850/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504956,
+                  "caption": "Ascensori",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504956/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749505006,
+                  "caption": "Disimpegno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749505006/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749505062,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749505062/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1749504790,
+                  "caption": "Facciata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1749504790/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "2",
+              "value": "2°",
+              "floorOnlyValue": "2",
+              "ga4FloorValue": "2"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 550,
+              "formattedValue": "€ 550/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "1",
+            "surface": "45 m²",
+            "typology": {
+              "id": 14,
+              "name": "Monolocale"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "fibra ottica",
+              "porta blindata",
+              "esposizione interna",
+              "impianto tv con parabola satellitare",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "MONOLOCALE ARREDATO IN PIENO CENTRO",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1749499920,
+              "caption": "Facciata",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1749499920/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1749499920/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1749499920/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Corso Umberto I",
+              "latitude": 40.9127,
+              "longitude": 14.3454,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "1 locale",
+                "compactLabel": "1"
+              },
+              {
+                "type": "surface",
+                "label": "45 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano 2",
+                "compactLabel": "2"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Monolocale corso Umberto I, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Monolocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Monolocale corso Umberto I, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/121932080/"
+      },
+      "idGeoHash": "sr60wryj"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 115770655,
+        "uuid": "14adf28c-9200-5038-86bf-ff5f440862dd",
+        "advertiser": {
+          "agency": {
+            "id": 5608,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.R. Home Marketing",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1200645992.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1200645994.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/5608/pr-home-marketing-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Raffaela Panico",
+            "label": "agente immobiliare",
+            "imageUrl": "https://pic.im-cdn.it/agenti/40924/1329867438/80.jpg"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 500,
+          "formattedValue": "€ 500/mese",
+          "priceRange": "fino a 500 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1599408555,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599408555/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1599408495,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599408495/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1618361029,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1618361029/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1618361059,
+                  "caption": "Salone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1618361059/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1599408577,
+                  "caption": "Camera da letto",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599408577/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1599408525,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599408525/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1599412107,
+                  "caption": "Interno palazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599412107/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1599412091,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1599412091/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T",
+              "value": "Piano terra",
+              "floorOnlyValue": "piano terra",
+              "ga4FloorValue": "piano terra"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 500,
+              "formattedValue": "€ 500/mese",
+              "priceRange": "fino a 500 &euro;"
+            },
+            "rooms": "2",
+            "surface": "40 m²",
+            "typology": {
+              "id": 14,
+              "name": "Bilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "cancello elettrico",
+              "porta blindata",
+              "esposizione esterna",
+              "impianto tv centralizzato",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "APPARTAMENTO RISTRUTTURATO E ARREDATO IN CASALNUOVO",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1599408555,
+              "caption": "Bagno",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1599408555/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1599408555/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1599408555/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via Benevento",
+              "latitude": 40.9172,
+              "longitude": 14.3533,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "40 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T",
+                "compactLabel": "T"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via Benevento, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Bilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via Benevento, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/115770655/"
+      },
+      "idGeoHash": "sr60y8ez"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 109442435,
+        "uuid": "50e75976-65da-50b8-ba09-73efb7e46d09",
+        "advertiser": {
+          "agency": {
+            "id": 13612,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.F. Studio Srl",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1138179528.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1138179530.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/13612/pf-studio-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1928 4022"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Pelliccia Francesco",
+            "label": "agente immobiliare"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 650,
+          "formattedValue": "€ 650/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1919195396,
+                  "caption": "Cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195396/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195392,
+                  "caption": "Zona",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195392/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195406,
+                  "caption": "Ingresso",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195406/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195422,
+                  "caption": "Scala",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195422/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195432,
+                  "caption": "Scala",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195432/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195450,
+                  "caption": "Interno non residenziale",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195450/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195464,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195464/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195476,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195476/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195488,
+                  "caption": "Bagno",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195488/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195504,
+                  "caption": "Altro",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195504/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195524,
+                  "caption": "Interno palazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195524/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195534,
+                  "caption": "Balcone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195534/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195548,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195548/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195564,
+                  "caption": "Balcone",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195564/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195580,
+                  "caption": "Facciata",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195580/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919195610,
+                  "caption": "Ingresso",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919195610/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919569640,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919569640/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1919569666,
+                  "caption": "Terrazzo",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1919569666/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T, 1, 2",
+              "value": "3 piani: Piano terra, da 1° a 2°",
+              "floorOnlyValue": "piano terra, da 1 a 2",
+              "ga4FloorValue": "piano terra, da 1 a 2"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 650,
+              "formattedValue": "€ 650/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "2",
+            "surface": "92 m²",
+            "typology": {
+              "id": 14,
+              "name": "Bilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "caminetto",
+              "porta blindata",
+              "balcone",
+              "terrazzo",
+              "impianto tv con parabola satellitare",
+              "arredato",
+              "esposizione doppia"
+            ],
+            "ga4Heating": "Assente",
+            "caption": "BILOCALE ARREDATO SU 2LIVELLI",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1919195396,
+              "caption": "Cucina",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1919195396/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1919195396/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1919195396/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via 25 Luglio",
+              "latitude": 40.9148,
+              "longitude": 14.3592,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Casalnuovo di Napoli",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "92 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T, 1, 2",
+                "compactLabel": "T, 1, 2"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "terrace",
+                "label": "Terrazzo"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via 25 Luglio 1, Centro, Casalnuovo di Napoli",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Bilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via 25 Luglio 1, Centro, Casalnuovo di Napoli",
+        "url": "https://www.immobiliare.it/annunci/109442435/"
+      },
+      "idGeoHash": "sr60yb21"
+    },
+    {
+      "realEstate": {
+        "dataType": "list-real-estate",
+        "id": 106839665,
+        "uuid": "e94dd1b5-3c44-59f5-8be0-461aa1a7ea1f",
+        "advertiser": {
+          "supervisor": {
+            "type": "user",
+            "imageGender": "male",
+            "phones": [],
+            "imageType": "user",
+            "label": "privato"
+          },
+          "hasCallNumbers": false
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 700,
+          "formattedValue": "€ 700/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1875637877,
+                  "caption": "",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1875637877/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1875639809,
+                  "caption": "",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1875639809/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": true,
+            "floor": {
+              "abbreviation": "R",
+              "value": "Piano rialzato, con ascensore",
+              "floorOnlyValue": "piano rialzato",
+              "ga4FloorValue": "piano rialzato"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 700,
+              "formattedValue": "€ 700/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "2",
+            "elevator": true,
+            "surface": "70 m²",
+            "typology": {
+              "id": 14,
+              "name": "Appartamento"
+            },
+            "ga4Garage": "1 posto auto",
+            "typologyGA4Translation": "Appartamento",
+            "views": [
+              {
+                "id": 9,
+                "name": "db_feature.view.id_9"
+              }
+            ],
+            "ga4features": [
+              "accesso per disabili",
+              "cucina",
+              "balcone",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1875637877,
+              "caption": "",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1875637877/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1875637877/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1875637877/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via Raffaello Sanzio",
+              "latitude": 40.87364578,
+              "longitude": 14.34389782,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Centro",
+              "city": "Volla",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "70 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano R",
+                "compactLabel": "R"
+              },
+              {
+                "type": "elevator",
+                "label": "Ascensore",
+                "compactLabel": "Sì"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via Raffaello Sanzio 1, Centro, Volla",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Appartamento"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via Raffaello Sanzio 1, Centro, Volla",
+        "url": "https://www.immobiliare.it/annunci/106839665/"
+      },
+      "idGeoHash": "sr60w2uc"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 105992333,
+        "uuid": "3ae73ac4-e1b2-57b6-a747-e1f513718af1",
+        "advertiser": {
+          "agency": {
+            "id": 5608,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.R. Home Marketing",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1200645992.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1200645994.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/5608/pr-home-marketing-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Raffaela Panico",
+            "label": "agente immobiliare",
+            "imageUrl": "https://pic.im-cdn.it/agenti/40924/1329867438/80.jpg"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 400,
+          "formattedValue": "€ 400/mese",
+          "priceRange": "fino a 500 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1402438293,
+                  "caption": "cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438293/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438319,
+                  "caption": "cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438319/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438305,
+                  "caption": "cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438305/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438497,
+                  "caption": "cucina",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438497/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438211,
+                  "caption": "wc",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438211/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438253,
+                  "caption": "wc",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438253/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438333,
+                  "caption": "armadio",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438333/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438269,
+                  "caption": "camera",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438269/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402438229,
+                  "caption": "camera",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402438229/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402441679,
+                  "caption": "strada",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402441679/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402441689,
+                  "caption": "strada",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402441689/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1402441699,
+                  "caption": "Assi",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1402441699/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "T",
+              "value": "Piano terra",
+              "floorOnlyValue": "piano terra",
+              "ga4FloorValue": "piano terra"
+            },
+            "ga4Condition": "Buono / Abitabile",
+            "price": {
+              "visible": true,
+              "value": 400,
+              "formattedValue": "€ 400/mese",
+              "priceRange": "fino a 500 &euro;"
+            },
+            "rooms": "2",
+            "surface": "35 m²",
+            "typology": {
+              "id": 14,
+              "name": "Bilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "cancello elettrico",
+              "fibra ottica",
+              "porta blindata",
+              "esposizione interna",
+              "impianto tv centralizzato",
+              "arredato"
+            ],
+            "ga4Heating": "Assente",
+            "caption": "ARREDATO PER NON RESIDENTI PERIFERIA DI POMIGLIANO D'ARCO",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1402438293,
+              "caption": "cucina",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1402438293/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1402438293/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1402438293/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via dei Romani",
+              "latitude": 40.901,
+              "longitude": 14.3851,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Guadagni, Papaccio, Ciccarelli, Fornaro",
+              "city": "Pomigliano d'Arco",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "35 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano T",
+                "compactLabel": "T"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via dei Romani, Guadagni, Papaccio, Ciccarelli, Fornaro, Pomigliano d'Arco",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Bilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via dei Romani, Guadagni, Papaccio, Ciccarelli, Fornaro, Pomigliano d'Arco",
+        "url": "https://www.immobiliare.it/annunci/105992333/"
+      },
+      "idGeoHash": "sr60xmfc"
+    },
+    {
+      "realEstate": {
+        "visibility": "premium",
+        "dataType": "list-real-estate",
+        "id": 98127550,
+        "uuid": "eb463b7f-9482-59db-99bb-8c7c18b36f20",
+        "advertiser": {
+          "agency": {
+            "id": 5608,
+            "type": "agency",
+            "showOnlyAgentPhone": false,
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "bookableVisit": {
+              "isVisitBookable": true,
+              "virtualVisitEnabled": false
+            },
+            "isPaid": true,
+            "label": "agenzia",
+            "displayName": "P.R. Home Marketing",
+            "guaranteed": false,
+            "showAgentPhone": false,
+            "showLogo": true,
+            "imageUrls": {
+              "small": "https://pic.im-cdn.it/imagenoresize/1200645992.jpg",
+              "large": "https://pic.im-cdn.it/imagenoresize/1200645994.jpg"
+            },
+            "agencyUrl": "https://www.immobiliare.it/agenzie-immobiliari/5608/pr-home-marketing-casalnuovo-di-napoli/",
+            "showExternalLink": false
+          },
+          "supervisor": {
+            "type": "agent",
+            "imageGender": "male",
+            "phones": [
+              {
+                "type": "vTel1",
+                "value": "081 1892 1458"
+              }
+            ],
+            "imageType": "agent",
+            "displayName": "Raffaela Panico",
+            "label": "agente immobiliare",
+            "imageUrl": "https://pic.im-cdn.it/agenti/40924/1329867438/80.jpg"
+          },
+          "hasCallNumbers": true
+        },
+        "contract": "rent",
+        "isNew": false,
+        "luxury": false,
+        "price": {
+          "visible": true,
+          "value": 600,
+          "formattedValue": "€ 600/mese",
+          "priceRange": "501 - 1000 &euro;"
+        },
+        "properties": [
+          {
+            "multimedia": {
+              "photos": [
+                {
+                  "id": 1219751568,
+                  "caption": "CUCINA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751568/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751574,
+                  "caption": "DIVANO",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751574/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751582,
+                  "caption": "WC",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751582/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751610,
+                  "caption": "CAMERA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751610/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751652,
+                  "caption": "SOGGIORNO",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751652/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751672,
+                  "caption": "CAMERA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751672/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1399022303,
+                  "caption": "CUCINA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1399022303/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1399022357,
+                  "caption": "DIVANO",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1399022357/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751740,
+                  "caption": "PARETE ATTREZZATA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751740/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1399022405,
+                  "caption": "PARETE ATTREZZATA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1399022405/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1219751854,
+                  "caption": "PALAZZO",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1219751854/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1399022455,
+                  "caption": "PARETE ATTREZZATA",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1399022455/xxs-c.jpg"
+                  }
+                },
+                {
+                  "id": 1399022505,
+                  "caption": "ESTERNO",
+                  "urls": {
+                    "small": "https://pwm.im-cdn.it/image/1399022505/xxs-c.jpg"
+                  }
+                }
+              ],
+              "virtualTours": [],
+              "hasMultimedia": true
+            },
+            "bathrooms": "1",
+            "isMain": false,
+            "floor": {
+              "abbreviation": "R",
+              "value": "Piano rialzato",
+              "floorOnlyValue": "piano rialzato",
+              "ga4FloorValue": "piano rialzato"
+            },
+            "ga4Condition": "Ottimo / Ristrutturato",
+            "price": {
+              "visible": true,
+              "value": 600,
+              "formattedValue": "€ 600/mese",
+              "priceRange": "501 - 1000 &euro;"
+            },
+            "rooms": "2",
+            "surface": "55 m²",
+            "typology": {
+              "id": 14,
+              "name": "Bilocale"
+            },
+            "typologyGA4Translation": "Appartamento",
+            "ga4features": [
+              "cancello elettrico",
+              "fibra ottica",
+              "porta blindata",
+              "esposizione interna",
+              "balcone",
+              "impianto tv centralizzato",
+              "arredato"
+            ],
+            "ga4Heating": "Autonomo",
+            "caption": "POMIGLIANO PERIFERIA BILOCALE ARREDATO LIBERO DAL 1 GENNAIO",
+            "category": {
+              "id": 1,
+              "name": "Residenziale"
+            },
+            "photo": {
+              "id": 1219751568,
+              "caption": "CUCINA",
+              "urls": {
+                "small": "https://pwm.im-cdn.it/image/1219751568/xxs-c.jpg",
+                "medium": "https://pwm.im-cdn.it/image/1219751568/m-c.jpg",
+                "large": "https://pwm.im-cdn.it/image/1219751568/xxl.jpg"
+              }
+            },
+            "bedRoomsNumber": "1",
+            "location": {
+              "address": "Via Eugenio Cutinelli",
+              "latitude": 40.8895,
+              "longitude": 14.3929,
+              "marker": "marker",
+              "region": "Campania",
+              "province": "Napoli",
+              "macrozone": "Cutinelli",
+              "city": "Pomigliano d'Arco",
+              "nation": {
+                "id": "IT",
+                "name": "Italia"
+              }
+            },
+            "featureList": [
+              {
+                "type": "rooms",
+                "label": "2 locali",
+                "compactLabel": "2"
+              },
+              {
+                "type": "surface",
+                "label": "55 m²"
+              },
+              {
+                "type": "bathrooms",
+                "label": "1 bagno",
+                "compactLabel": "1"
+              },
+              {
+                "type": "floor",
+                "label": "Piano R",
+                "compactLabel": "R"
+              },
+              {
+                "type": "elevator",
+                "label": "No Ascensore",
+                "compactLabel": "No"
+              },
+              {
+                "type": "balcony",
+                "label": "Balcone"
+              },
+              {
+                "type": "furniture",
+                "label": "Arredato"
+              }
+            ]
+          }
+        ],
+        "title": "Bilocale via Eugenio Cutinelli, Cutinelli, Pomigliano d'Arco",
+        "type": "ad",
+        "typology": {
+          "id": 14,
+          "name": "Bilocale"
+        },
+        "hasMainProperty": false,
+        "isProjectLike": false,
+        "isMosaic": false
+      },
+      "seo": {
+        "anchor": "Bilocale via Eugenio Cutinelli, Cutinelli, Pomigliano d'Arco",
+        "url": "https://www.immobiliare.it/annunci/98127550/"
+      },
+      "idGeoHash": "sr60xe8w"
+    }
+  ],
+  "breadcrumbs": [
+    {
+      "label": "Immobiliare.it",
+      "link": {
+        "url": "https://www.immobiliare.it/",
+        "follow": null,
+        "current": null
+      },
+      "type": "root",
+      "items": null
+    },
+    {
+      "label": "area disegnata su mappa",
+      "link": null,
+      "type": "drawn-area",
+      "items": null
+    }
+  ],
+  "agencies": [],
+  "seoData": {
+    "title": "Case arredate in affitto - Immobiliare.it",
+    "subtitle": "case arredate in affitto",
+    "description": "14 annunci di case arredate in affitto. Scopri tutti gli annunci privati e di agenzie e scegli con Immobiliare.it la tua futura casa.",
+    "searchName": "Case in affitto",
+    "alternate": [
+      {
+        "rel": "alternate",
+        "hreflang": "en",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=en&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "de",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=de&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "es",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=es&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "fr",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=fr&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "el",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=el&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "pt",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=pt&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "ru",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=ru&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "it",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=it&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      },
+      {
+        "rel": "alternate",
+        "hreflang": "x-default",
+        "href": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=it&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700"
+      }
+    ],
+    "canonical": "https://www.immobiliare.it/search-list/?raggio=5000&centro=40.87414,14.34105&__lang=it&criterio=data&ordine=desc&idnazione=it&idcategoria=1&idcontratto=2&prezzomassimo=700",
+    "prevPage": null,
+    "nextPage": null,
+    "facebookSettings": {
+      "title": "Case arredate in affitto - Immobiliare.it",
+      "subtitle": "case arredate in affitto",
+      "description": "14 annunci di case arredate in affitto. Scopri tutti gli annunci privati e di agenzie e scegli con Immobiliare.it la tua futura casa.",
+      "searchName": "Case in affitto"
+    }
+  },
+  "relatedSearches": {
+    "title": null,
+    "data": []
+  },
+  "suggestedSearchData": {
+    "token": "8796fb8f823640b735d6045a9f706e62",
+    "verticaleSito": "annunci_residenziali"
+  },
+  "currentPage": 1,
+  "maxPages": 1
+}
