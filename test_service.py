@@ -84,6 +84,19 @@ class SchedulingTests(unittest.TestCase):
 
 
 class PaginationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_startup_error_reports_chromium_stderr_and_display(self):
+        browser = Mock()
+        browser.start = AsyncMock(side_effect=RuntimeError("Failed to connect to browser"))
+        browser._process.returncode = 1
+        browser._process.communicate = AsyncMock(return_value=(b"", b"Missing X server or DISPLAY"))
+        with patch("browser_runtime.nd.Browser", return_value=browser), patch.dict(
+            "os.environ", {"DISPLAY": ":99"}
+        ), patch("browser_runtime.nd.util.get_registered_instances", return_value={browser}):
+            with self.assertRaisesRegex(RuntimeError, "Missing X server or DISPLAY") as raised:
+                async with open_browser("browser", "profile"):
+                    self.fail("Unreachable")
+        self.assertIn("DISPLAY=:99", str(raised.exception))
+
     async def test_navigation_session_replacement_is_reattached(self):
         tab = Mock()
         tab.get_content = AsyncMock(side_effect=[

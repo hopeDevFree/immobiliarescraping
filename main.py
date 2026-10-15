@@ -21,7 +21,11 @@ def create_app(store, worker, interval):
     @app.get("/health")
     def health():
         status = store.status()
-        status.update(worker_alive=worker.is_alive(), interval_seconds=interval)
+        status.update(
+            worker_alive=worker.is_alive(), interval_seconds=interval,
+            revision=os.environ.get("RENDER_GIT_COMMIT", "unknown"),
+            display=os.environ.get("DISPLAY"),
+        )
         return jsonify(status), 200 if worker.is_alive() else 503
 
     return app

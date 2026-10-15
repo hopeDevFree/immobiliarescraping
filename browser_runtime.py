@@ -1,6 +1,7 @@
 """Own and reap Chromium across repeated scans in a long-lived process."""
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 import nodriver as nd
@@ -14,18 +15,35 @@ async def open_browser(executable, profile_dir):
         user_data_dir=str(profile_dir), headless=False, sandbox=False,
         browser_args=["--disable-dev-shm-usage"],
     ))
+    startup_failure = None
     try:
-        await browser.start()
+        try:
+            await browser.start()
+        except Exception as exc:
+            startup_failure = exc
+            raise
         yield browser
     finally:
         process = browser._process
+        exit_before_cleanup = process.returncode if process is not None else None
+        stderr = b""
         browser.stop()  # aclose() alone closes only the websocket, not Chromium.
         try:
             if process is not None:
                 try:
-                    await asyncio.wait_for(process.communicate(), timeout=10)
+                    output = await asyncio.wait_for(process.communicate(), timeout=10)
                 except TimeoutError:
-                    process.kill()
-                    await asyncio.wait_for(process.communicate(), timeout=5)
+                    if process.returncode is None:
+                        process.kill()
+                    output = await asyncio.wait_for(process.communicate(), timeout=5)
+                if isinstance(output, tuple):
+                    stderr = output[1] or b""
         finally:
             nd.util.get_registered_instances().discard(browser)
+        if startup_failure is not None:
+            detail = stderr.decode("utf-8", errors="replace")[-2000:]
+            raise RuntimeError(
+                f"Chromium startup failed: DISPLAY={os.environ.get('DISPLAY', '<unset>')}; "
+                f"exit_before_cleanup={exit_before_cleanup}; stderr={detail or '<empty>'}; "
+                f"cause={startup_failure}"
+            ) from startup_failure
