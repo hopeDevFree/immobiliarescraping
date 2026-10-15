@@ -1,11 +1,13 @@
 """Read every page of the exact configured search, without local filtering."""
 
 import asyncio
+from contextlib import suppress
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-import nodriver as nd
 from bs4 import BeautifulSoup
+from nodriver import ProtocolException
 
+from browser_runtime import open_browser
 from listing_parser import inspect_html
 from search_config import RADIUS_URL
 
@@ -24,7 +26,14 @@ async def read_page(browser, url):
         stable = 0
         for _ in range(60):
             await asyncio.sleep(1)
-            html = await asyncio.wait_for(tab.get_content(), timeout=10)
+            try:
+                html = await asyncio.wait_for(tab.get_content(), timeout=10)
+            except ProtocolException as exc:
+                if "Session with given id not found" not in str(exc):
+                    raise
+                # Chromium can replace a target's session during navigation.
+                tab.session_id = None
+                continue
             info = inspect_html(html, url)
             rows = info.get("rendered_listings", info.get("listings", []))
             ids = tuple(row["id"] for row in rows)
@@ -43,7 +52,8 @@ async def read_page(browser, url):
         }
         return rows, total, pages
     finally:
-        await tab.close()
+        with suppress(Exception):
+            await asyncio.wait_for(tab.close(), timeout=5)
 
 
 async def collect_pages(browser, url=RADIUS_URL, max_pages=10):
@@ -68,19 +78,6 @@ async def collect_pages(browser, url=RADIUS_URL, max_pages=10):
 
 
 async def scan(executable, profile_dir, timeout=120):
-    browser = None
-    try:
-        async with asyncio.timeout(timeout):
-            browser = await nd.start(
-                browser_executable_path=executable,
-                user_data_dir=str(profile_dir), headless=False,
-                sandbox=False,
-                browser_args=["--disable-dev-shm-usage"],
-            )
+    async with asyncio.timeout(timeout):
+        async with open_browser(executable, profile_dir) as browser:
             return await collect_pages(browser)
-    finally:
-        if browser is not None:
-            try:
-                await asyncio.wait_for(browser.aclose(), timeout=10)
-            except Exception:
-                browser.stop()

@@ -6,8 +6,9 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 from listing_parser import inspect_html
+from browser_runtime import open_browser
 from main import create_app
-from scraper import collect_pages, page_url
+from scraper import ProtocolException, collect_pages, page_url, read_page
 from search_config import RADIUS_URL
 from service import Store, run_once, run_schedule
 
@@ -83,6 +84,38 @@ class SchedulingTests(unittest.TestCase):
 
 
 class PaginationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_navigation_session_replacement_is_reattached(self):
+        tab = Mock()
+        tab.get_content = AsyncMock(side_effect=[
+            ProtocolException({"code": -32001, "message": "Session with given id not found"}),
+            "html", "html", "html", "html",
+        ])
+        tab.close = AsyncMock()
+        browser = Mock()
+        browser.get = AsyncMock(return_value=tab)
+        info = {"rendered_listings": [listing(1)], "displayed_total_ads": 1}
+        with patch("scraper.asyncio.sleep", AsyncMock()), patch("scraper.inspect_html", return_value=info):
+            rows, total, _ = await read_page(browser, RADIUS_URL)
+        self.assertEqual(total, 1)
+        self.assertEqual(rows, [listing(1)])
+        self.assertIsNone(tab.session_id)
+        tab.close.assert_awaited_once()
+
+    async def test_failed_browser_start_always_stops_and_reaps_child(self):
+        browser = Mock()
+        browser.start = AsyncMock(side_effect=RuntimeError("start failed"))
+        browser._process.communicate = AsyncMock()
+        registry = {browser}
+        with patch("browser_runtime.nd.Browser", return_value=browser), patch(
+            "browser_runtime.nd.util.get_registered_instances", return_value=registry
+        ):
+            with self.assertRaisesRegex(RuntimeError, "start failed"):
+                async with open_browser("browser", "profile"):
+                    self.fail("Unreachable")
+        browser.stop.assert_called_once()
+        browser._process.communicate.assert_awaited_once()
+        self.assertFalse(registry)
+
     async def test_all_pages_with_exact_url_and_no_price_filter(self):
         reader = AsyncMock(side_effect=[([listing(1, 1600)], 2, {2}), ([listing(2)], 2, {1})])
         with patch("scraper.read_page", reader):

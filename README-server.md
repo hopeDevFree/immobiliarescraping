@@ -6,6 +6,10 @@ poi una scansione ogni 180 secondi dall'inizio della precedente. Timeout
 di lettura di 120 secondi. Le scansioni non si sovrappongono: dopo uno sforamento
 si attende un intervallo intero. Non sono previsti tentativi immediati sui blocchi.
 
+Chromium viene terminato e atteso alla fine di ogni scansione, anche quando
+l'avvio fallisce: chiudere solo il websocket di nodriver non basta. La sessione
+di debug viene riagganciata se Chromium la sostituisce durante la navigazione.
+
 ## Ricerca e dati
 
 L'URL in `search_config.py` e esattamente quello dell'utente. La scansione
@@ -62,6 +66,13 @@ con totale/nuovi/modificati/usciti oppure `SCAN_FAILED` con l'errore.
 python -m pip --python .venv/Scripts/python.exe install -r requirements-server.txt
 .venv/Scripts/python.exe -m unittest test_service -v
 ```
+
+Verifica del 15 ottobre 2026: 10 test passati e due scansioni reali consecutive
+con lo stesso profilo, entrambe con 27 annunci. La seconda ha registrato zero
+nuovi annunci e zero modifiche. Lo scheduler locale di prova e stato fermato.
+L'immagine Docker non e stata costruita localmente perche il daemon Docker
+Desktop non era attivo; la build Linux e la lettura dall'IP Render devono
+essere verificate dopo il deployment.
 
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:
