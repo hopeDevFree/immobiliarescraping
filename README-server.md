@@ -1,9 +1,11 @@
 # Servizio Render: scansione ogni 3 minuti
 
-Il Dockerfile avvia Chromium tramite Xvfb e un singolo processo Python con
-server HTTP Waitress e un worker sequenziale. Prima scansione all'avvio;
-poi una scansione ogni 180 secondi dall'inizio della precedente. Timeout
-di lettura di 120 secondi. Le scansioni non si sovrappongono: dopo uno sforamento
+Il Dockerfile avvia Xvfb e un singolo processo Python con server HTTP Waitress
+e un worker sequenziale. Il worker legge l'API direttamente o tramite Reader;
+Chromium viene avviato per le alternative browser. Prima scansione all'avvio;
+poi una scansione ogni 180 secondi dall'inizio della precedente. Ogni richiesta
+HTTP ha un timeout e ogni prova browser un budget di 120 secondi.
+Le scansioni non si sovrappongono: dopo uno sforamento
 si attende un intervallo intero. Non sono previsti tentativi immediati sui blocchi.
 
 Chromium viene terminato e atteso alla fine di ogni scansione, anche quando
@@ -119,11 +121,13 @@ sequenziali e il server HTTP continua a rispondere. Un metodo e selezionato solo
 dopo aver letto tutte le pagine e verificato il totale degli annunci. Alle
 scansioni successive viene riutilizzato quel metodo ogni 180 secondi.
 Se nessuno funziona, la matrice non viene ripetuta a ogni intervallo: si riprova
-una sola navigazione browser, conservando il profilo della variante.
+una sola scansione Reader, evitando di rilanciare continuamente Chromium.
 
 Se l'accesso diretto non funziona, Jina Reader legge le stesse pagine API senza
 account o chiavi. Ogni richiesta invia `X-No-Cache: true`, evitando la cache del
-lettore. Si verificano anche qui tutte le pagine, totale e ID univoci. Un metodo
+lettore. Il parser accetta sia testo contenente il JSON della ricerca, sia
+l'involucro JSON del Reader con i risultati dentro `data.content`.
+Si verificano anche qui tutte le pagine, totale e ID univoci. Un metodo
 HTTP selezionato che in seguito fallisce puo passare al Reader senza ripetere
 l'intera matrice. [Uso gratuito e limiti del Reader](https://jina.ai/reader/).
 
@@ -156,6 +160,40 @@ la matrice ha rilevato CAPTCHA HTTP 403 sugli accessi diretti e blocchi
 DataDome in tutte e tre le varianti browser. Il vecchio endpoint `real-estates`
 ha risposto 404. Nessuna scansione sul server e riuscita con quella revisione.
 La successiva integrazione del Reader deve essere verificata sul servizio live.
+
+Alle 11:42 UTC la revisione `be0e1b0` e stata verificata su Render con
+`last_scan.ok: 1`, 27 annunci attivi, zero nuovi/modificati/rimossi e intervallo
+di 180 secondi. Il metodo selezionato e `reader`, trasporto `curl`. Tutti i 27 ID
+corrispondono al confronto con la ricerca dell'utente. Il Reader aveva restituito
+errori e un limite HTTP 429 all'avvio; i successivi tentativi pianificati hanno
+recuperato l'accesso senza un ulteriore deployment. Non sono usati servizi a
+pagamento, account Jina o browser sul PC.
+
+Anche la prova singola GitHub Actions `Access network check` e riuscita dalla
+rete del runner: API diretta, 27 ID identici e nessuna differenza di prezzo
+rispetto alla ricerca salvata. Quella prova non attiva uno scraper pianificato
+su GitHub. La scansione resta su Render ogni tre minuti.
+
+## Controllo esterno gratuito
+
+Il workflow `.github/workflows/render-health.yml` controlla `/health` ogni cinque
+minuti da un runner standard GitHub, senza account aggiuntivi, segreti o checkout.
+Accetta solo worker attivo, intervallo di 180 secondi, ultima scansione riuscita
+e ultimo successo non piu vecchio di dieci minuti. Un totale di zero annunci
+resta valido se la ricerca completa lo dichiara. Le richieste sono anche traffico
+in ingresso al servizio Render.
+
+Il job viene allocato solo nel repository pubblico originale; copie private
+e fork vengono saltati. I runner standard per repository pubblici sono gratuiti:
+[documentazione GitHub](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+Non vengono caricati artefatti o cache.
+
+Gli orari GitHub Actions possono subire ritardi o esecuzioni saltate. Dopo 60
+giorni senza attivita del repository GitHub disabilita le pianificazioni:
+[documentazione schedule](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+Questo controllo migliora la continuita e rileva i guasti, ma non garantisce un
+servizio 24/7. Restano i limiti del piano Free e la perdita dei dati locali ai
+riavvii di Render. L'esito e visibile nella scheda Actions del repository.
 
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:

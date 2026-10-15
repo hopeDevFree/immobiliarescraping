@@ -1,0 +1,67 @@
+name: Render health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  push:
+    branches: [master]
+    paths: [.github/workflows/render-health.yml]
+
+permissions: {}
+
+concurrency:
+  group: render-health
+  cancel-in-progress: false
+
+jobs:
+  check:
+    # Standard runners are free for public repositories. Skip private copies
+    # and forks before allocating a runner; no secrets or checkout are needed.
+    if: github.repository == 'hopeDevFree/immobiliarescraping' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check worker and recent successful scan
+        env:
+          HEALTH_URL: https://immobiliarescraping-74hx.onrender.com/health
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.request
+          from datetime import datetime, timezone
+
+          request = urllib.request.Request(
+              os.environ['HEALTH_URL'] + '?check=' + str(int(time.time())),
+              headers={'Cache-Control': 'no-cache'},
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=75) as response:
+                  state = json.loads(response.read(65536))
+              last = state.get('last_scan') or {}
+              success = datetime.fromisoformat(state['last_success'])
+              age = (datetime.now(timezone.utc) - success).total_seconds()
+              valid = (
+                  state.get('worker_alive') is True
+                  and state.get('interval_seconds') == 180
+                  and last.get('ok') == 1
+                  and -60 <= age <= 600
+              )
+              print(json.dumps({
+                  'healthy': valid,
+                  'revision': state.get('revision'),
+                  'active_listings': state.get('active_listings'),
+                  'last_scan_ok': last.get('ok'),
+                  'last_success_age_seconds': round(age),
+              }))
+          except Exception as exc:
+              # Error messages can include response bodies. Only log the class.
+              print('::error::Health check failed: ' + type(exc).__name__)
+              sys.exit(1)
+          if not valid:
+              print('::error::Worker or successful search is unavailable or stale')
+              sys.exit(1)
+          PY

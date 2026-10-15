@@ -15,7 +15,7 @@ from access_http import HttpScanError, _captcha_object, _page_url, diagnostic_ta
 READER_PREFIX = "https://r.jina.ai/"
 READER_TIMEOUT = 30
 READER_TRANSPORTS = ("curl", "chrome", "urllib")
-READER_HEADERS = {"X-No-Cache": "true", "Accept": "application/json"}
+READER_HEADERS = {"X-No-Cache": "true"}
 
 
 def _get_reader(url, transport="curl"):
