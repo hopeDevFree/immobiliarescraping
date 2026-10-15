@@ -9,7 +9,7 @@ from listing_parser import inspect_html
 from browser_runtime import open_browser
 from browser_runtime import start_browser
 from main import create_app
-from scraper import ProtocolException, collect_pages, page_url, read_page
+from scraper import ProtocolException, collect_pages, page_url, read_page, unreadable_page
 from search_config import RADIUS_URL
 from service import Store, run_once, run_schedule
 
@@ -116,6 +116,7 @@ class PaginationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_navigation_session_replacement_is_reattached(self):
         tab = Mock()
+        tab.send = AsyncMock()
         tab.evaluate = AsyncMock(side_effect=[
             ProtocolException({"code": -32001, "message": "Session with given id not found"}),
             "html", "html", "html", "html",
@@ -130,6 +131,13 @@ class PaginationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(rows, [listing(1)])
         self.assertIsNone(tab.session_id)
         tab.close.assert_awaited_once()
+
+    async def test_unreadable_search_distinguishes_denial_from_loading_failure(self):
+        info = {"title": "Case in affitto", "text_excerpt": "Pagina in caricamento", "datadome_reference": True}
+        self.assertIn("SEARCH_LOAD_FAILED", str(unreadable_page(info, [])))
+        self.assertIn("SEARCH_BLOCKED", str(unreadable_page(info, [{"path": "/api-next/search-list/real-estates", "status": 403}])))
+        challenge = {"text_excerpt": "Please enable JS and disable any ad blocker"}
+        self.assertIn("SEARCH_BLOCKED", str(unreadable_page(challenge, [])))
 
     async def test_failed_browser_start_always_stops_and_reaps_child(self):
         browser = Mock()

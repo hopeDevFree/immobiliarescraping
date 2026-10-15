@@ -1,11 +1,12 @@
 """Read every page of the exact configured search, without local filtering."""
 
 import asyncio
+import json
 from contextlib import suppress
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
-from nodriver import ProtocolException
+from nodriver import ProtocolException, cdp
 
 from browser_runtime import open_browser
 from listing_parser import inspect_html
@@ -19,11 +20,36 @@ def page_url(url, number):
     return urlunsplit(parts._replace(query=urlencode(params, doseq=True)))
 
 
+def unreadable_page(info, network_errors):
+    text = info.get("text_excerpt", "")
+    challenge = "please enable js and disable any ad blocker" in text.lower()
+    blocked = challenge or any(e["status"] in (401, 403, 429) for e in network_errors)
+    return RuntimeError(("SEARCH_BLOCKED " if blocked else "SEARCH_LOAD_FAILED ") + json.dumps({
+        "title": info.get("title"), "body_excerpt": text[:240],
+        "has_next_data": info.get("has_next_data"),
+        "protection_reference": info.get("datadome_reference"),
+        "network_errors": network_errors[-5:],
+    }, ensure_ascii=False))
+
+
 async def read_page(browser, url):
     tab = await browser.get(url, new_tab=True)
+    network_errors = []
+
+    def record_response(event):
+        response = event.response
+        target = urlsplit(response.url)
+        if (event.type_ in (cdp.network.ResourceType.DOCUMENT, cdp.network.ResourceType.XHR, cdp.network.ResourceType.FETCH)
+                and target.hostname == "www.immobiliare.it" and response.status >= 400):
+            network_errors.append({"path": target.path[:180], "status": int(response.status)})
+            del network_errors[:-5]
+
     try:
+        tab.add_handler(cdp.network.ResponseReceived, record_response)
+        await tab.send(cdp.network.enable())
         previous = None
         stable = 0
+        info = {}
         for _ in range(60):
             await asyncio.sleep(1)
             try:
@@ -47,7 +73,7 @@ async def read_page(browser, url):
                     break
             previous = ids
         else:
-            raise RuntimeError("Search not readable: blocked, incomplete, or layout changed")
+            raise unreadable_page(info, network_errors)
         soup = BeautifulSoup(html, "html.parser")
         pages = {
             int(p) for a in soup.select("a[href]")
