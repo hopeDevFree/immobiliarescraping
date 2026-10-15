@@ -1,0 +1,42 @@
+name: Access network check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: [.github/workflows/access-network-check.yml]
+
+permissions: {}
+
+jobs:
+  check:
+    if: github.repository == 'hopeDevFree/immobiliarescraping' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Prepare public source and isolated Python
+        run: |
+          git clone --depth 1 --branch master https://github.com/hopeDevFree/immobiliarescraping.git source
+          python3 -m venv "$RUNNER_TEMP/access-check"
+          "$RUNNER_TEMP/access-check/bin/python" -m pip --disable-pip-version-check install curl_cffi==0.16.3 beautifulsoup4==4.15.0
+      - name: Direct public API
+        id: direct
+        continue-on-error: true
+        working-directory: source
+        run: |
+          "$RUNNER_TEMP/access-check/bin/python" - <<'PY'
+          import json
+          from access_http import scan_http, diagnostic_targets
+          rows = scan_http('chrome', diagnostic_targets()[2][1])
+          print(json.dumps({'method': 'http', 'total': len(rows), 'listings': rows}))
+          PY
+      - name: Anonymous Reader
+        if: steps.direct.outcome == 'failure'
+        working-directory: source
+        run: |
+          "$RUNNER_TEMP/access-check/bin/python" - <<'PY'
+          import json
+          from access_reader import scan_reader
+          rows = scan_reader()
+          print(json.dumps({'method': 'reader', 'total': len(rows), 'listings': rows}))
+          PY
