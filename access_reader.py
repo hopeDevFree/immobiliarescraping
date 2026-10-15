@@ -15,6 +15,7 @@ from access_http import HttpScanError, _captcha_object, _page_url, diagnostic_ta
 READER_PREFIX = "https://r.jina.ai/"
 READER_TIMEOUT = 30
 READER_TRANSPORTS = ("curl", "chrome", "urllib")
+READER_HEADERS = {"X-No-Cache": "true", "Accept": "application/json"}
 
 
 def _get_reader(url, transport="curl"):
@@ -24,7 +25,7 @@ def _get_reader(url, transport="curl"):
         if transport == "urllib":
             import urllib.error
             import urllib.request
-            request = urllib.request.Request(READER_PREFIX + url, headers={"X-No-Cache": "true"})
+            request = urllib.request.Request(READER_PREFIX + url, headers=READER_HEADERS)
             try:
                 response = urllib.request.urlopen(request, timeout=READER_TIMEOUT)
             except urllib.error.HTTPError as exc:
@@ -36,7 +37,7 @@ def _get_reader(url, transport="curl"):
         return requests.get(
             READER_PREFIX + url,
             timeout=READER_TIMEOUT,
-            headers={"X-No-Cache": "true"},
+            headers=READER_HEADERS,
             allow_redirects=False,
             **options,
         )
@@ -66,15 +67,37 @@ def _parse_reader(response):
         payload = json.loads(raw)
     except (ValueError, TypeError):
         raise HttpScanError("reader_invalid_json", response.status_code) from None
-    if _captcha_object(payload):
-        raise HttpScanError("reader_captcha", response.status_code)
-    try:
-        parsed = parse_search_json(payload)
-    except Exception:
-        raise HttpScanError("reader_malformed_results", response.status_code) from None
-    if parsed is None:
-        raise HttpScanError("reader_unrecognized_results", response.status_code)
-    return parsed
+    candidates = [payload]
+    # Reader JSON mode wraps the fetched page in data.content. Older responses
+    # can put content at the root; plain text mode returns the API object itself.
+    if isinstance(payload, dict):
+        for container in (payload, payload.get("data")):
+            content = container.get("content") if isinstance(container, dict) else None
+            if not isinstance(content, str):
+                continue
+            content = content.split("Markdown Content:", 1)[-1].strip()
+            if content.startswith("```json\n") and content.endswith("```"):
+                content = content[len("```json\n"):-3].strip()
+            try:
+                candidates.append(json.loads(content))
+            except (ValueError, TypeError):
+                continue
+    for candidate in candidates:
+        if _captcha_object(candidate):
+            raise HttpScanError("reader_captcha", response.status_code)
+        try:
+            parsed = parse_search_json(candidate)
+        except Exception:
+            raise HttpScanError("reader_malformed_results", response.status_code) from None
+        if parsed is not None:
+            return parsed
+    error = HttpScanError("reader_unrecognized_results", response.status_code)
+    if isinstance(payload, dict):
+        known = {"code", "status", "data", "content", "title", "url", "results", "totalAds", "maxPages", "name", "message"}
+        error.details = {"root_keys": sorted(set(payload) & known)}
+        if isinstance(payload.get("data"), dict):
+            error.details["data_keys"] = sorted(set(payload["data"]) & known)
+    raise error
 
 
 def scan_reader(max_pages=10, transport="curl"):

@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from access_http import HttpScanError, diagnostic_targets
-from access_reader import READER_PREFIX, scan_reader
+from access_reader import READER_HEADERS, READER_PREFIX, scan_reader
 
 
 def response(ids=(), total=0, pages=1, payload=None, status=200):
@@ -28,7 +28,7 @@ class ReaderTests(unittest.TestCase):
             READER_PREFIX + first, READER_PREFIX + first.replace("&pag=1", "&pag=2"),
         ])
         for call in get.call_args_list:
-            self.assertEqual(call.kwargs, {"timeout": 30, "headers": {"X-No-Cache": "true"}, "allow_redirects": False})
+            self.assertEqual(call.kwargs, {"timeout": 30, "headers": READER_HEADERS, "allow_redirects": False})
 
     def test_captcha_and_invalid_body_never_become_empty_search(self):
         secret = "DO-NOT-LOG-CHALLENGE"
@@ -86,7 +86,7 @@ class ReaderTests(unittest.TestCase):
             self.assertEqual(scan_reader(transport="chrome"), [])
         self.assertEqual(get.call_args.args[0], READER_PREFIX + first)
         self.assertEqual(get.call_args.kwargs["impersonate"], "chrome")
-        self.assertEqual(get.call_args.kwargs["headers"], {"X-No-Cache": "true"})
+        self.assertEqual(get.call_args.kwargs["headers"], READER_HEADERS)
         wire = Mock(status=200)
         wire.read.return_value = empty.text.encode("utf-8")
         wire.__enter__ = Mock(return_value=wire)
@@ -96,6 +96,19 @@ class ReaderTests(unittest.TestCase):
         request = get.call_args.args[0]
         self.assertEqual(request.full_url, READER_PREFIX + first)
         self.assertEqual(request.get_header("X-no-cache"), "true")
+
+    def test_json_reader_envelope_contains_the_real_search_in_data_content(self):
+        first = response([1], 2, 2).text.split("Markdown Content:\n", 1)[1]
+        second = response([2], 2, 2).text.split("Markdown Content:\n", 1)[1]
+        envelopes = [Mock(status_code=200, text=json.dumps({"code": 200, "status": 20000, "data": {"url": diagnostic_targets()[2][1], "content": item}})) for item in (first, second)]
+        with patch("curl_cffi.requests.get", side_effect=envelopes):
+            self.assertEqual([row["id"] for row in scan_reader()], [1, 2])
+        challenge = json.dumps({"url": "https://geo.captcha-delivery.com/captcha/?cid=DO-NOT-LOG"})
+        wrapped = Mock(status_code=200, text=json.dumps({"data": {"content": challenge}}))
+        with patch("curl_cffi.requests.get", return_value=wrapped):
+            with self.assertRaisesRegex(HttpScanError, "reader_captcha") as raised:
+                scan_reader()
+        self.assertNotIn("DO-NOT-LOG", str(raised.exception))
 
 
 if __name__ == "__main__":
