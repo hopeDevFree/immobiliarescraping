@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from listing_parser import inspect_html
 from browser_runtime import open_browser
+from browser_runtime import start_browser
 from main import create_app
 from scraper import ProtocolException, collect_pages, page_url, read_page
 from search_config import RADIUS_URL
@@ -84,6 +85,22 @@ class SchedulingTests(unittest.TestCase):
 
 
 class PaginationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_slow_browser_is_attached_without_starting_a_second_process(self):
+        browser = Mock()
+        browser.start = AsyncMock(side_effect=RuntimeError("Failed to connect to browser"))
+        browser._process.returncode = None
+        browser._http.get = AsyncMock(side_effect=[
+            ConnectionRefusedError(), {"webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/browser/test"},
+        ])
+        browser.attach = AsyncMock()
+        browser.update_targets = AsyncMock()
+        with patch("browser_runtime.asyncio.sleep", AsyncMock()):
+            await start_browser(browser)
+        browser.start.assert_awaited_once()
+        browser.attach.assert_awaited_once()
+        browser.update_targets.assert_awaited_once()
+        self.assertEqual(browser.websocket_url, "ws://127.0.0.1:9222/devtools/browser/test")
+
     async def test_startup_error_reports_chromium_stderr_and_display(self):
         browser = Mock()
         browser.start = AsyncMock(side_effect=RuntimeError("Failed to connect to browser"))

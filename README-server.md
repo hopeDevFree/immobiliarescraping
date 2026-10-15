@@ -9,6 +9,10 @@ si attende un intervallo intero. Non sono previsti tentativi immediati sui blocc
 Chromium viene terminato e atteso alla fine di ogni scansione, anche quando
 l'avvio fallisce: chiudere solo il websocket di nodriver non basta. La sessione
 di debug viene riagganciata se Chromium la sostituisce durante la navigazione.
+Su server con CPU limitata nodriver puo esaurire i suoi tentativi iniziali
+prima che Chromium sia pronto. Il runtime attende fino a 30 secondi il debugger
+dello stesso processo. Non rilancia un secondo browser sullo stesso profilo.
+Gli errori di avvio includono display, codice di uscita e stderr di Chromium.
 
 ## Ricerca e dati
 
@@ -56,6 +60,8 @@ Questa implementazione non cambia il piano e non crea servizi a pagamento.
 Aprire `/health` sull'URL pubblico del servizio. `worker_alive: true` conferma
 il worker, `interval_seconds: 180` l'intervallo. `last_scan.ok: 1` indica
 una scansione completa; `last_success` deve avanzare dopo tre minuti.
+`revision` riporta `RENDER_GIT_COMMIT` e `display` il display Xvfb, per
+distinguere un deployment vecchio da quello corrente.
 Un HTTP 200 da solo certifica che il worker e vivo, non l'accesso al portale:
 controllare sempre anche l'esito della scansione. I log mostrano `SCAN_OK`
 con totale/nuovi/modificati/usciti oppure `SCAN_FAILED` con l'errore.
@@ -70,9 +76,11 @@ python -m pip --python .venv/Scripts/python.exe install -r requirements-server.t
 Verifica del 15 ottobre 2026: 10 test passati e due scansioni reali consecutive
 con lo stesso profilo, entrambe con 27 annunci. La seconda ha registrato zero
 nuovi annunci e zero modifiche. Lo scheduler locale di prova e stato fermato.
-L'immagine Docker non e stata costruita localmente perche il daemon Docker
-Desktop non era attivo; la build Linux e la lettura dall'IP Render devono
-essere verificate dopo il deployment.
+Successiva verifica Linux: immagine Docker costruita, errore di avvio riprodotto
+con 512 MB di RAM e 0.5 CPU. Chromium era ancora vivo e stampava il debugger,
+ma nodriver aveva gia terminato i tentativi. Con l'attesa estesa la stessa prova
+ha caricato about:blank in circa 6 secondi. Tutti i 12 test passano.
+La lettura degli annunci dall'IP Render resta da verificare sul servizio live.
 
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:
