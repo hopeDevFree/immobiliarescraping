@@ -103,6 +103,34 @@ temporanei del CAPTCHA. L'intervallo richiesto resta 180 secondi e gli ultimi
 dati validi vengono conservati. Questa gestione dell'errore non risolve il blocco.
 Tutti i 15 test passano, inclusa la riproduzione della risposta vista su Render.
 
+## Confronto gratuito dei metodi di accesso
+
+All'avvio il worker esegue una matrice finita di prove, visibile in sola lettura
+su `/diagnostics`: sei GET HTTP fra pagina originale e API JSON pubbliche,
+poi varianti browser con scheda gia aperta, passaggio dalla home e avvio
+di Chromium prima del collegamento CDP. I parametri della ricerca restano quelli
+del link originale. Un solo tentativo API aggiunge `path=/search-list/`, parametro
+tecnico di instradamento, dichiarato nel resoconto.
+
+Ogni GET ha timeout di 15 secondi; ogni variante browser ha un budget proprio.
+La prima scansione puo quindi richiedere diversi minuti. Le prove sono
+sequenziali e il server HTTP continua a rispondere. Un metodo e selezionato solo
+dopo aver letto tutte le pagine e verificato il totale degli annunci. Alle
+scansioni successive viene riutilizzato quel metodo ogni 180 secondi.
+Se nessuno funziona, la matrice non viene ripetuta a ogni intervallo: si riprova
+una sola navigazione browser, conservando il profilo della variante.
+
+Il resoconto contiene esiti, status HTTP, ID annunci e pochi header consentiti;
+non contiene cookie, credenziali o identificativi CAPTCHA. Non risolve CAPTCHA
+e non usa proxy o servizi a pagamento. `state: working` nel resoconto va sempre
+confrontato con `last_scan.ok: 1` in `/health`, che conferma anche il salvataggio.
+
+Verifica automatica della matrice e della conservazione dei dati:
+
+```powershell
+.venv/Scripts/python.exe -m unittest test_service test_access_http test_access_strategy -v
+```
+
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:
 

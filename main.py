@@ -4,12 +4,15 @@ import logging
 import os
 import signal
 import threading
+import json
+from functools import partial
 from pathlib import Path
 
 from flask import Flask, jsonify
 from waitress import serve
 
-from service import Store, run_schedule
+from service import Store, run_once, run_schedule
+from access_strategy import AccessScanner
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
@@ -28,6 +31,14 @@ def create_app(store, worker, interval):
         )
         return jsonify(status), 200 if worker.is_alive() else 503
 
+    @app.get("/diagnostics")
+    def diagnostics():
+        try:
+            report = json.loads((store.path.parent / "access-probes.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError):
+            report = {"state": "pending"}
+        return jsonify(report)
+
     return app
 
 
@@ -42,8 +53,10 @@ def main():
         raise FileNotFoundError(f"Browser executable missing: {executable}")
     store = Store(directory / "listings.sqlite3")
     stop = threading.Event()
+    scanner = AccessScanner(directory / "access-probes.json")
     worker = threading.Thread(
         target=run_schedule, args=(store, executable, directory / "browser-profile", stop, interval),
+        kwargs={"scan_once": partial(run_once, scanner=scanner)},
         name="scraper", daemon=True,
     )
 
