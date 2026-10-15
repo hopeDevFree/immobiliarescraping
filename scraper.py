@@ -20,12 +20,26 @@ def page_url(url, number):
     return urlunsplit(parts._replace(query=urlencode(params, doseq=True)))
 
 
+def datadome_captcha(info):
+    try:
+        body = json.loads(info.get("text_excerpt", ""))
+    except (ValueError, TypeError):
+        return False
+    if not isinstance(body, dict) or not isinstance(body.get("url"), str):
+        return False
+    target = urlsplit(body["url"])
+    host = target.hostname or ""
+    return (host == "captcha-delivery.com" or host.endswith(".captcha-delivery.com")) and target.path.startswith("/captcha/")
+
+
 def unreadable_page(info, network_errors):
     text = info.get("text_excerpt", "")
-    challenge = "please enable js and disable any ad blocker" in text.lower()
+    captcha = datadome_captcha(info)
+    challenge = captcha or "please enable js and disable any ad blocker" in text.lower()
     blocked = challenge or any(e["status"] in (401, 403, 429) for e in network_errors)
     return RuntimeError(("SEARCH_BLOCKED " if blocked else "SEARCH_LOAD_FAILED ") + json.dumps({
-        "title": info.get("title"), "body_excerpt": text[:240],
+        "reason": "datadome_captcha" if captcha else "access_denied" if blocked else "results_not_loaded",
+        "title": info.get("title"), "body_excerpt": "[DataDome CAPTCHA challenge]" if captcha else text[:240],
         "has_next_data": info.get("has_next_data"),
         "protection_reference": info.get("datadome_reference"),
         "network_errors": network_errors[-5:],
@@ -64,6 +78,8 @@ async def read_page(browser, url):
                 tab.session_id = None
                 continue
             info = inspect_html(html, url)
+            if datadome_captcha(info):
+                raise unreadable_page(info, network_errors)
             rows = info.get("rendered_listings", info.get("listings", []))
             ids = tuple(row["id"] for row in rows)
             total = info.get("displayed_total_ads", info.get("total_ads"))

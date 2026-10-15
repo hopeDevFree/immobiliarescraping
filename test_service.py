@@ -139,6 +139,27 @@ class PaginationTests(unittest.IsolatedAsyncioTestCase):
         challenge = {"text_excerpt": "Please enable JS and disable any ad blocker"}
         self.assertIn("SEARCH_BLOCKED", str(unreadable_page(challenge, [])))
 
+    async def test_json_captcha_response_is_blocked_and_identifiers_are_not_logged(self):
+        body = json.dumps({"url": "https://geo.captcha-delivery.com/captcha/?cid=test-session-id&referer=https%3A%2F%2Fwww.immobiliare.it"})
+        info = inspect_html(f"<html><body><pre>{body}</pre></body></html>", RADIUS_URL)
+        error = str(unreadable_page(info, []))
+        self.assertIn("SEARCH_BLOCKED", error)
+        self.assertIn("datadome_captcha", error)
+        self.assertNotIn("test-session-id", error)
+
+    async def test_captcha_stops_page_polling_without_waiting_for_results(self):
+        tab = Mock()
+        tab.send = AsyncMock()
+        tab.evaluate = AsyncMock(return_value='<pre>{"url":"https://geo.captcha-delivery.com/captcha/?cid=example"}</pre>')
+        tab.close = AsyncMock()
+        browser = Mock()
+        browser.get = AsyncMock(return_value=tab)
+        with patch("scraper.asyncio.sleep", AsyncMock()):
+            with self.assertRaisesRegex(RuntimeError, "SEARCH_BLOCKED"):
+                await read_page(browser, RADIUS_URL)
+        tab.evaluate.assert_awaited_once()
+        tab.close.assert_awaited_once()
+
     async def test_failed_browser_start_always_stops_and_reaps_child(self):
         browser = Mock()
         browser.start = AsyncMock(side_effect=RuntimeError("start failed"))

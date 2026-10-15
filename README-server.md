@@ -89,6 +89,20 @@ La lettura degli annunci dall'IP Render resta da verificare sul servizio live:
 al controllo successivo ai push rispondeva ancora la versione precedente
 senza i campi `revision` e `display`.
 
+## Esito sul servizio Render
+
+Il 15 ottobre 2026 la revisione `13c5770` e stata verificata online:
+Chromium si avvia e lo scheduler e vivo, ma il sito restituisce un JSON con
+un URL `geo.captcha-delivery.com/captcha/` anziche i risultati. Il servizio
+ha zero annunci e nessuna scansione riuscita. Questo e un blocco DataDome
+osservato dal server, non una prova di assenza di immobili.
+
+Il riconoscimento del JSON CAPTCHA ora produce `SEARCH_BLOCKED` con motivo
+`datadome_captcha`, interrompe subito la lettura e non registra gli identificativi
+temporanei del CAPTCHA. L'intervallo richiesto resta 180 secondi e gli ultimi
+dati validi vengono conservati. Questa gestione dell'errore non risolve il blocco.
+Tutti i 15 test passano, inclusa la riproduzione della risposta vista su Render.
+
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:
 
