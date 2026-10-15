@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from access_strategy import AccessScanner
+from access_http import HttpScanError
 from main import create_app
 from search_config import RADIUS_URL
 from service import Store
@@ -71,7 +72,7 @@ class AccessComparisonTests(unittest.IsolatedAsyncioTestCase):
             initial_calls = browser.await_count
             with self.assertRaises(RuntimeError):
                 await self.scanner("chromium", self.root / "profile")
-            self.assertEqual(browser.await_count, initial_calls + 1)
+            self.assertEqual(browser.await_count, initial_calls)
             http.assert_called_once()
         self.assertEqual(self.scanner.report["last_scan"]["status"], "failed")
 
@@ -85,7 +86,7 @@ class AccessComparisonTests(unittest.IsolatedAsyncioTestCase):
         http.assert_called_once()
         self.assertEqual(reader.call_count, 2)
         browser.assert_not_called()
-        self.assertEqual(self.scanner.selected, {"method": "reader"})
+        self.assertEqual(self.scanner.selected, {"method": "reader", "transport": "curl"})
 
     async def test_selected_http_can_recover_through_reader_without_full_matrix(self):
         self.scanner.started = True
@@ -96,7 +97,22 @@ class AccessComparisonTests(unittest.IsolatedAsyncioTestCase):
         ), patch("access_strategy.probe_http") as matrix:
             self.assertEqual(await self.scanner("chromium", self.root / "profile"), rows)
         matrix.assert_not_called()
-        self.assertEqual(self.scanner.selected, {"method": "reader"})
+        self.assertEqual(self.scanner.selected, {"method": "reader", "transport": "curl"})
+
+    async def test_rate_limit_is_recorded_and_not_retried_by_changing_clients(self):
+        error = HttpScanError("reader_http_status", status=429)
+        error.details = {"name": "RateLimitTriggeredError", "status": 42901}
+        with patch("access_strategy.probe_http", return_value={"results": []}), patch(
+            "access_strategy.scan_reader", side_effect=error
+        ) as reader, patch("access_strategy.probe_browser", AsyncMock(return_value={"status": "blocked"})):
+            with self.assertRaises(RuntimeError):
+                await self.scanner("chromium", self.root / "profile")
+        reader.assert_called_once()
+        entry = self.scanner.report["experiments"][0]
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["http_status"], 429)
+        self.assertEqual(entry["category"], "reader_http_status")
+        self.assertEqual(entry["reader_error"]["name"], "RateLimitTriggeredError")
 
 
 if __name__ == "__main__":

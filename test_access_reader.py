@@ -70,6 +70,33 @@ class ReaderTests(unittest.TestCase):
                 scan_reader()
         self.assertNotIn(secret, str(raised.exception))
 
+    def test_reader_service_error_exposes_only_name_and_numeric_codes(self):
+        body = json.dumps({"name": "SecurityCompromiseError", "code": 451, "status": 45101,
+                           "message": "DO-NOT-LOG-CHALLENGE", "url": "https://example.invalid/?token=secret"})
+        with patch("curl_cffi.requests.get", return_value=Mock(status_code=451, text=body)):
+            with self.assertRaises(HttpScanError) as raised:
+                scan_reader()
+        self.assertEqual(raised.exception.details, {"name": "SecurityCompromiseError", "code": 451, "status": 45101})
+        self.assertNotIn("DO-NOT-LOG", str(raised.exception))
+
+    def test_alternative_clients_preserve_target_and_no_cache(self):
+        first = diagnostic_targets()[2][1]
+        empty = response([], 0, 0)
+        with patch("curl_cffi.requests.get", return_value=empty) as get:
+            self.assertEqual(scan_reader(transport="chrome"), [])
+        self.assertEqual(get.call_args.args[0], READER_PREFIX + first)
+        self.assertEqual(get.call_args.kwargs["impersonate"], "chrome")
+        self.assertEqual(get.call_args.kwargs["headers"], {"X-No-Cache": "true"})
+        wire = Mock(status=200)
+        wire.read.return_value = empty.text.encode("utf-8")
+        wire.__enter__ = Mock(return_value=wire)
+        wire.__exit__ = Mock(return_value=False)
+        with patch("urllib.request.urlopen", return_value=wire) as get:
+            self.assertEqual(scan_reader(transport="urllib"), [])
+        request = get.call_args.args[0]
+        self.assertEqual(request.full_url, READER_PREFIX + first)
+        self.assertEqual(request.get_header("X-no-cache"), "true")
+
 
 if __name__ == "__main__":
     unittest.main()

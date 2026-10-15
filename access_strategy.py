@@ -8,11 +8,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from access_browser import VARIANTS, probe_browser
-from access_http import probe_http, scan_http
-from access_reader import scan_reader
+from access_http import HttpScanError, probe_http, scan_http
+from access_reader import READER_TRANSPORTS, scan_reader
 from search_config import RADIUS_URL
 
 logger = logging.getLogger(__name__)
+
+
+def error_evidence(exc):
+    result = {"error_type": type(exc).__name__}
+    if isinstance(exc, HttpScanError):
+        result.update(category=exc.category, http_status=exc.status, transport_error_code=exc.transport_error_code)
+        if getattr(exc, "details", None):
+            result["reader_error"] = exc.details
+    return result
 
 
 class AccessScanner:
@@ -69,14 +78,19 @@ class AccessScanner:
 
         self.report["state"] = "testing_reader"
         self.publish()
-        try:
-            rows = await asyncio.to_thread(scan_reader)
-        except Exception as exc:
-            self.report["experiments"].append({"method": "reader", "status": "failed", "error_type": type(exc).__name__})
-            self.publish()
-        else:
-            self.report["experiments"].append({"method": "reader", "status": "ok", "total": len(rows)})
-            return self.choose({"method": "reader"}, rows)
+        for transport in READER_TRANSPORTS:
+            try:
+                rows = await asyncio.to_thread(scan_reader, transport=transport)
+            except Exception as exc:
+                self.report["experiments"].append({"method": "reader", "transport": transport, "status": "failed", **error_evidence(exc)})
+                self.publish()
+                # Changing client libraries cannot clear a rate limit or a
+                # documented access restriction from the Reader itself.
+                if isinstance(exc, HttpScanError) and exc.status in (402, 429, 451):
+                    break
+            else:
+                self.report["experiments"].append({"method": "reader", "transport": transport, "status": "ok", "total": len(rows)})
+                return self.choose({"method": "reader", "transport": transport}, rows)
 
         for variant in VARIANTS:
             self.report["state"] = "testing_" + variant
@@ -93,14 +107,14 @@ class AccessScanner:
         raise RuntimeError("SEARCH_BLOCKED: bounded free access comparison found no complete search; see /diagnostics")
 
     async def repeat(self, executable, profile_dir):
-        # A failed matrix is never repeated every three minutes. Retry one browser
-        # navigation only, retaining its session, so a temporary block can clear.
-        method = self.selected or {"method": "browser", "variant": "direct_tab"}
+        # Do not repeat the matrix or repeatedly launch browsers from a blocked
+        # network. Retry one bounded Reader scan if no method has worked yet.
+        method = self.selected or {"method": "reader", "transport": "curl"}
         try:
             if method["method"] == "http":
                 rows = await asyncio.to_thread(scan_http, method["profile"], method["url"])
             elif method["method"] == "reader":
-                rows = await asyncio.to_thread(scan_reader)
+                rows = await asyncio.to_thread(scan_reader, transport=method.get("transport", "curl"))
             else:
                 result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", method["variant"])
                 rows = result.pop("listings", None)
@@ -117,8 +131,8 @@ class AccessScanner:
                 except Exception:
                     pass
                 else:
-                    return self.choose({"method": "reader"}, rows)
+                    return self.choose({"method": "reader", "transport": "curl"}, rows)
             self.report["state"] = "unavailable"
-            self.report["last_scan"] = {"status": "failed", "error_type": type(exc).__name__}
+            self.report["last_scan"] = {"status": "failed", **error_evidence(exc)}
             self.publish()
             raise
