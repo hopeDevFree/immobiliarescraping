@@ -1,10 +1,24 @@
-FROM python:3.11
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-COPY . .
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    CHROME_EXECUTABLE=/usr/bin/chromium \
+    DATA_DIR=/app/data \
+    SCRAPE_INTERVAL_SECONDS=180
 
-RUN pip install --no-cache-dir -r requirements.txt
-RUN python -m playwright install --with-deps chromium
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends chromium xvfb xauth tini fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
-CMD ["python", "./main.py"]
+COPY requirements-server.txt .
+RUN pip install --no-cache-dir -r requirements-server.txt
+
+RUN useradd --create-home --uid 10001 scraper \
+    && mkdir -p /app/data && chown scraper:scraper /app/data
+COPY --chown=scraper:scraper main.py service.py scraper.py listing_parser.py search_config.py ./
+USER scraper
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1366x900x24", "python", "main.py"]

@@ -1,0 +1,11 @@
+.git
+.idea
+.venv
+vendor
+reports
+data
+__pycache__
+.env
+.env.*
+*.session*
+*.sqlite3*

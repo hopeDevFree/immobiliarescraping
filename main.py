@@ -1,80 +1,62 @@
-import json
+"""Render web service with a single browser scan every three minutes."""
+
 import logging
 import os
+import signal
 import threading
+from pathlib import Path
 
-from flask import Flask
-from playwright.sync_api import sync_playwright
+from flask import Flask, jsonify
+from waitress import serve
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-)
-logger = logging.getLogger(__name__)
+from service import Store, run_schedule
 
-web = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
 
-@web.route("/")
-def home():
-    return "Test Playwright attivo", 200
+def create_app(store, worker, interval):
+    app = Flask(__name__)
+
+    @app.get("/")
+    @app.get("/health")
+    def health():
+        status = store.status()
+        status.update(worker_alive=worker.is_alive(), interval_seconds=interval)
+        return jsonify(status), 200 if worker.is_alive() else 503
+
+    return app
 
 
-def test_playwright():
-    logger.info("TEST PLAYWRIGHT | avvio")
+def main():
+    directory = Path(os.environ.get("DATA_DIR", "data"))
+    directory.mkdir(parents=True, exist_ok=True)
+    interval = int(os.environ.get("SCRAPE_INTERVAL_SECONDS", "180"))
+    if interval < 180:
+        raise ValueError("SCRAPE_INTERVAL_SECONDS must be at least 180")
+    executable = os.environ.get("CHROME_EXECUTABLE", "/usr/bin/chromium")
+    if not Path(executable).is_file():
+        raise FileNotFoundError(f"Browser executable missing: {executable}")
+    store = Store(directory / "listings.sqlite3")
+    stop = threading.Event()
+    worker = threading.Thread(
+        target=run_schedule, args=(store, executable, directory / "browser-profile", stop, interval),
+        name="scraper", daemon=True,
+    )
 
+    def shutdown(*_):
+        stop.set()
+        worker.join(timeout=135)
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+    worker.start()
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-
-            try:
-                page = browser.new_page()
-                response = page.goto(
-                    "https://www.immobiliare.it/affitto-case/caserta/",
-                    wait_until="domcontentloaded",
-                    timeout=30000,
-                )
-
-                status = response.status if response else None
-                logger.info("TEST PLAYWRIGHT | HTTP %s", status)
-
-                if status != 200:
-                    logger.error("TEST PLAYWRIGHT | pagina non accessibile")
-                    return
-
-                node = page.locator("#__NEXT_DATA__")
-                node.wait_for(state="attached", timeout=10000)
-
-                data = json.loads(node.text_content())
-                queries = data["props"]["pageProps"]["dehydratedState"]["queries"]
-
-                counts = [
-                    len(q["state"]["data"]["results"])
-                    for q in queries
-                    if isinstance(q.get("state", {}).get("data"), dict)
-                    and isinstance(q["state"]["data"].get("results"), list)
-                ]
-
-                logger.info(
-                    "TEST PLAYWRIGHT | annunci caricati: %s",
-                    sum(counts),
-                )
-                logger.info("TEST PLAYWRIGHT | titolo: %s", page.title())
-
-            finally:
-                browser.close()
-
-    except Exception:
-        logger.exception("TEST PLAYWRIGHT | errore")
+        serve(create_app(store, worker, interval), host="0.0.0.0", port=int(os.environ.get("PORT", "10000")))
+    finally:
+        stop.set()
+        worker.join(timeout=135)
 
 
 if __name__ == "__main__":
-    test = threading.Timer(5, test_playwright)
-    test.daemon = True
-    test.start()
-
-    web.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", "10000")),
-        use_reloader=False,
-    )
+    main()
