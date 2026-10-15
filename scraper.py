@@ -27,7 +27,10 @@ async def read_page(browser, url):
         for _ in range(60):
             await asyncio.sleep(1)
             try:
-                html = await asyncio.wait_for(tab.get_content(), timeout=10)
+                # Avoid materializing the entire CDP DOM tree on small servers.
+                html = await asyncio.wait_for(
+                    tab.evaluate("document.documentElement.outerHTML"), timeout=25
+                )
             except ProtocolException as exc:
                 if "Session with given id not found" not in str(exc):
                     raise

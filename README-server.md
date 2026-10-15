@@ -80,7 +80,14 @@ Successiva verifica Linux: immagine Docker costruita, errore di avvio riprodotto
 con 512 MB di RAM e 0.5 CPU. Chromium era ancora vivo e stampava il debugger,
 ma nodriver aveva gia terminato i tentativi. Con l'attesa estesa la stessa prova
 ha caricato about:blank in circa 6 secondi. Tutti i 12 test passano.
-La lettura degli annunci dall'IP Render resta da verificare sul servizio live.
+La lettura di pagina usa `document.documentElement.outerHTML`, evitando la
+materializzazione dell'intero albero DOM via CDP, con timeout di 25 secondi
+per lettura e limite complessivo di scansione di 120 secondi. La scansione
+completa del container corretto, sempre con 512 MB e 0.5 CPU, ha letto tutti
+i 27 annunci delle due pagine. Il container di prova e terminato.
+La lettura degli annunci dall'IP Render resta da verificare sul servizio live:
+al controllo successivo ai push rispondeva ancora la versione precedente
+senza i campi `revision` e `display`.
 
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:

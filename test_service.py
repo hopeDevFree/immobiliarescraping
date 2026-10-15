@@ -116,7 +116,7 @@ class PaginationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_navigation_session_replacement_is_reattached(self):
         tab = Mock()
-        tab.get_content = AsyncMock(side_effect=[
+        tab.evaluate = AsyncMock(side_effect=[
             ProtocolException({"code": -32001, "message": "Session with given id not found"}),
             "html", "html", "html", "html",
         ])
