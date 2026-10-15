@@ -9,6 +9,7 @@ from pathlib import Path
 
 from access_browser import VARIANTS, probe_browser
 from access_http import probe_http, scan_http
+from access_reader import scan_reader
 from search_config import RADIUS_URL
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,17 @@ class AccessScanner:
             self.report["experiments"].append({"method": "http", "error_type": type(exc).__name__})
             self.publish()
 
+        self.report["state"] = "testing_reader"
+        self.publish()
+        try:
+            rows = await asyncio.to_thread(scan_reader)
+        except Exception as exc:
+            self.report["experiments"].append({"method": "reader", "status": "failed", "error_type": type(exc).__name__})
+            self.publish()
+        else:
+            self.report["experiments"].append({"method": "reader", "status": "ok", "total": len(rows)})
+            return self.choose({"method": "reader"}, rows)
+
         for variant in VARIANTS:
             self.report["state"] = "testing_" + variant
             self.publish()
@@ -87,6 +99,8 @@ class AccessScanner:
         try:
             if method["method"] == "http":
                 rows = await asyncio.to_thread(scan_http, method["profile"], method["url"])
+            elif method["method"] == "reader":
+                rows = await asyncio.to_thread(scan_reader)
             else:
                 result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", method["variant"])
                 rows = result.pop("listings", None)
@@ -95,6 +109,15 @@ class AccessScanner:
                     raise RuntimeError("SEARCH_BLOCKED: " + result.get("reason", "search_unavailable"))
             return self.choose(method, rows)
         except Exception as exc:
+            # One lighter fallback can recover an HTTP method that becomes
+            # unavailable. The full startup comparison is never repeated.
+            if method["method"] == "http":
+                try:
+                    rows = await asyncio.to_thread(scan_reader)
+                except Exception:
+                    pass
+                else:
+                    return self.choose({"method": "reader"}, rows)
             self.report["state"] = "unavailable"
             self.report["last_scan"] = {"status": "failed", "error_type": type(exc).__name__}
             self.publish()

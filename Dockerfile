@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements-server.txt
 
 RUN useradd --create-home --uid 10001 scraper \
     && mkdir -p /app/data && chown scraper:scraper /app/data
-COPY --chown=scraper:scraper main.py service.py scraper.py browser_runtime.py listing_parser.py search_config.py access_http.py access_browser.py access_strategy.py ./
+COPY --chown=scraper:scraper main.py service.py scraper.py browser_runtime.py listing_parser.py search_config.py access_http.py access_browser.py access_reader.py access_strategy.py ./
 USER scraper
 
 ENTRYPOINT ["/usr/bin/tini", "--"]

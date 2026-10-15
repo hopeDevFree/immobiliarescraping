@@ -16,6 +16,9 @@ class AccessComparisonTests(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
         self.scanner = AccessScanner(self.root / "access-probes.json")
+        reader = patch("access_strategy.scan_reader", side_effect=RuntimeError("reader unavailable"))
+        reader.start()
+        self.addCleanup(reader.stop)
 
     async def test_complete_browser_method_is_reused_without_repeating_matrix(self):
         rows = [{"id": 1, "rent_eur": 1600}]
@@ -71,6 +74,29 @@ class AccessComparisonTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(browser.await_count, initial_calls + 1)
             http.assert_called_once()
         self.assertEqual(self.scanner.report["last_scan"]["status"], "failed")
+
+    async def test_reader_is_used_when_direct_access_fails_and_reused_next_scan(self):
+        rows = [{"id": 1, "rent_eur": 1600}]
+        with patch("access_strategy.probe_http", return_value={"results": []}) as http, patch(
+            "access_strategy.scan_reader", return_value=rows
+        ) as reader, patch("access_strategy.probe_browser", AsyncMock()) as browser:
+            self.assertEqual(await self.scanner("chromium", self.root / "profile"), rows)
+            self.assertEqual(await self.scanner("chromium", self.root / "profile"), rows)
+        http.assert_called_once()
+        self.assertEqual(reader.call_count, 2)
+        browser.assert_not_called()
+        self.assertEqual(self.scanner.selected, {"method": "reader"})
+
+    async def test_selected_http_can_recover_through_reader_without_full_matrix(self):
+        self.scanner.started = True
+        self.scanner.selected = {"method": "http", "profile": "chrome", "url": RADIUS_URL}
+        rows = [{"id": 1}]
+        with patch("access_strategy.scan_http", side_effect=RuntimeError("blocked")), patch(
+            "access_strategy.scan_reader", return_value=rows
+        ), patch("access_strategy.probe_http") as matrix:
+            self.assertEqual(await self.scanner("chromium", self.root / "profile"), rows)
+        matrix.assert_not_called()
+        self.assertEqual(self.scanner.selected, {"method": "reader"})
 
 
 if __name__ == "__main__":

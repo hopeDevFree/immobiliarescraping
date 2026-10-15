@@ -204,7 +204,7 @@ async def _plain_browser(executable, profile):
 async def probe_browser(executable, profile_root, variant):
     """Read the exact search once; return complete listings or a sanitized failure.
 
-    The overall budget is 70 seconds (85 for delayed attachment), including
+    The overall budget is 120 seconds, including
     Chromium startup. This function does not start the service, repeat itself,
     or interact with challenges.
     """
@@ -255,7 +255,7 @@ async def probe_browser(executable, profile_root, variant):
             del evidence["network_failures"][:-10]
 
     try:
-        async with asyncio.timeout(85 if variant == "plain_start" else 70):
+        async with asyncio.timeout(120):
             profile = Path(profile_root) / variant
             profile.mkdir(parents=True, exist_ok=True)
             runtime = _plain_browser if variant == "plain_start" else open_browser

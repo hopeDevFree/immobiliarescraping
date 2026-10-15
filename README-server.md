@@ -107,7 +107,8 @@ Tutti i 15 test passano, inclusa la riproduzione della risposta vista su Render.
 
 All'avvio il worker esegue una matrice finita di prove, visibile in sola lettura
 su `/diagnostics`: sei GET HTTP fra pagina originale e API JSON pubbliche,
-poi varianti browser con scheda gia aperta, passaggio dalla home e avvio
+poi lettura della stessa API tramite Jina Reader anonimo e varianti browser
+con scheda gia aperta, passaggio dalla home e avvio
 di Chromium prima del collegamento CDP. I parametri della ricerca restano quelli
 del link originale. Un solo tentativo API aggiunge `path=/search-list/`, parametro
 tecnico di instradamento, dichiarato nel resoconto.
@@ -120,16 +121,41 @@ scansioni successive viene riutilizzato quel metodo ogni 180 secondi.
 Se nessuno funziona, la matrice non viene ripetuta a ogni intervallo: si riprova
 una sola navigazione browser, conservando il profilo della variante.
 
+Se l'accesso diretto non funziona, Jina Reader legge le stesse pagine API senza
+account o chiavi. Ogni richiesta invia `X-No-Cache: true`, evitando la cache del
+lettore. Si verificano anche qui tutte le pagine, totale e ID univoci. Un metodo
+HTTP selezionato che in seguito fallisce puo passare al Reader senza ripetere
+l'intera matrice. [Uso gratuito e limiti del Reader](https://jina.ai/reader/).
+
 Il resoconto contiene esiti, status HTTP, ID annunci e pochi header consentiti;
 non contiene cookie, credenziali o identificativi CAPTCHA. Non risolve CAPTCHA
-e non usa proxy o servizi a pagamento. `state: working` nel resoconto va sempre
+e non usa servizi a pagamento. `state: working` nel resoconto va sempre
 confrontato con `last_scan.ok: 1` in `/health`, che conferma anche il salvataggio.
 
 Verifica automatica della matrice e della conservazione dei dati:
 
 ```powershell
-.venv/Scripts/python.exe -m unittest test_service test_access_http test_access_strategy -v
+.venv/Scripts/python.exe -m unittest test_service test_access_http test_access_reader test_access_strategy -v
 ```
+
+Verifica del 15 ottobre 2026: 36 test passati. L'API diretta con parametro
+tecnico `path=/search-list/` ha letto tutti i 27 annunci nel container da 512 MB
+e 0.5 CPU. ID e prezzi corrispondono al confronto completo con il sito;
+l'ordine di alcuni annunci cambia. Jina Reader ha restituito gli stessi 27 ID
+e prezzi su due pagine. La prova Linux del Reader, con cache disattivata,
+ha completato selezione del metodo e salvataggio SQLite in circa quattro secondi.
+Le varianti browser diretta e con collegamento ritardato hanno letto 27 annunci;
+quella passando dalla home ha esaurito il primo budget di 70 secondi con risposte
+HTTP 200. Le prove browser ora hanno tutte un budget di 120 secondi.
+Queste sono verifiche dal container locale: l'accesso dal servizio Render
+deve ancora essere controllato sulla nuova revisione. Al controllo delle 10:59
+UTC era ancora attiva `584c42d`, senza le nuove strategie.
+
+Alle 11:14 UTC la revisione `c177182` e stata controllata su Render:
+la matrice ha rilevato CAPTCHA HTTP 403 sugli accessi diretti e blocchi
+DataDome in tutte e tre le varianti browser. Il vecchio endpoint `real-estates`
+ha risposto 404. Nessuna scansione sul server e riuscita con quella revisione.
+La successiva integrazione del Reader deve essere verificata sul servizio live.
 
 Su Windows specificare `CHROME_EXECUTABLE` prima di eseguire `main.py`.
 Per provare il container su un host Docker:
