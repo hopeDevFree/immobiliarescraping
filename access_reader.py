@@ -1,16 +1,19 @@
-"""Read the unchanged public search API through Jina Reader anonymously.
+"""Read the unchanged public search API through Jina Reader.
 
-No account, API key, CAPTCHA interaction, cookie forwarding, or scheduler is
-used. Reader caches are explicitly disabled for each request. A scan succeeds
-only when every page has a stable total and all unique listing IDs are present.
+Supports optional JINA_API_KEY environment variable for dedicated rate limits.
+Includes automatic retries for transient 429 rate limits.
 """
 
 import json
+import logging
+import os
 import re
+import time
 from types import SimpleNamespace
 
 from access_http import HttpScanError, _captcha_object, _page_url, diagnostic_targets, parse_search_json
 
+logger = logging.getLogger(__name__)
 
 READER_PREFIX = "https://r.jina.ai/"
 READER_TIMEOUT = 30
@@ -18,32 +21,65 @@ READER_TRANSPORTS = ("curl", "chrome", "urllib")
 READER_HEADERS = {"X-No-Cache": "true"}
 
 
+def _get_headers():
+    headers = dict(READER_HEADERS)
+    api_key = os.environ.get("JINA_API_KEY")
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key.strip()}"
+    return headers
+
+
 def _get_reader(url, transport="curl"):
     from curl_cffi import requests
 
-    try:
-        if transport == "urllib":
-            import urllib.error
-            import urllib.request
-            request = urllib.request.Request(READER_PREFIX + url, headers=READER_HEADERS)
-            try:
-                response = urllib.request.urlopen(request, timeout=READER_TIMEOUT)
-            except urllib.error.HTTPError as exc:
-                response = exc
-            with response:
-                return SimpleNamespace(status_code=response.status, text=response.read(4 * 1024 * 1024).decode("utf-8", errors="replace"))
-        # Each GET owns a fresh session: no retained/forwarded cookies or auth.
-        options = {"impersonate": "chrome"} if transport == "chrome" else {}
-        return requests.get(
-            READER_PREFIX + url,
-            timeout=READER_TIMEOUT,
-            headers=READER_HEADERS,
-            allow_redirects=False,
-            **options,
-        )
-    except Exception as exc:
-        code = getattr(exc, "code", None)
-        raise HttpScanError("reader_transport", transport_error_code=code if isinstance(code, int) else None) from None
+    headers = _get_headers()
+    max_retries = 3
+
+    for attempt in range(max_retries):
+        try:
+            if transport == "urllib":
+                import urllib.error
+                import urllib.request
+                request = urllib.request.Request(READER_PREFIX + url, headers=headers)
+                try:
+                    response = urllib.request.urlopen(request, timeout=READER_TIMEOUT)
+                except urllib.error.HTTPError as exc:
+                    response = exc
+                with response:
+                    resp_obj = SimpleNamespace(
+                        status_code=response.status,
+                        text=response.read(4 * 1024 * 1024).decode("utf-8", errors="replace"),
+                    )
+            else:
+                options = {"impersonate": "chrome"} if transport == "chrome" else {}
+                resp_obj = requests.get(
+                    READER_PREFIX + url,
+                    timeout=READER_TIMEOUT,
+                    headers=headers,
+                    allow_redirects=False,
+                    **options,
+                )
+
+            # Se riceviamo un 429 (rate limit), aspettiamo e riproviamo prima di andare in errore
+            if resp_obj.status_code == 429 and attempt < max_retries - 1:
+                wait_time = 7 * (attempt + 1)
+                logger.warning("Jina 429 rate limit hit. Retrying in %ss (attempt %s/%s)...", wait_time, attempt + 1,
+                               max_retries)
+                time.sleep(wait_time)
+                continue
+
+            return resp_obj
+
+        except Exception as exc:
+            if attempt < max_retries - 1:
+                time.sleep(3)
+                continue
+            code = getattr(exc, "code", None)
+            raise HttpScanError("reader_transport",
+                                transport_error_code=code if isinstance(code, int) else None) from None
+
+    # Linea di sicurezza per il linter (se tutti i tentativi dovessero esaurirsi)
+    raise HttpScanError("reader_transport")
 
 
 def _parse_reader(response):
@@ -57,7 +93,7 @@ def _parse_reader(response):
             error.details = {
                 key: value for key, value in payload.items()
                 if (key in ("code", "status") and isinstance(value, int))
-                or (key == "name" and isinstance(value, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,79}", value))
+                   or (key == "name" and isinstance(value, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,79}", value))
             }
         raise error
     raw = response.text.split("Markdown Content:", 1)[-1].strip()
@@ -68,8 +104,6 @@ def _parse_reader(response):
     except (ValueError, TypeError):
         raise HttpScanError("reader_invalid_json", response.status_code) from None
     candidates = [payload]
-    # Reader JSON mode wraps the fetched page in data.content. Older responses
-    # can put content at the root; plain text mode returns the API object itself.
     if isinstance(payload, dict):
         for container in (payload, payload.get("data")):
             content = container.get("content") if isinstance(container, dict) else None
@@ -93,7 +127,8 @@ def _parse_reader(response):
             return parsed
     error = HttpScanError("reader_unrecognized_results", response.status_code)
     if isinstance(payload, dict):
-        known = {"code", "status", "data", "content", "title", "url", "results", "totalAds", "maxPages", "name", "message"}
+        known = {"code", "status", "data", "content", "title", "url", "results", "totalAds", "maxPages", "name",
+                 "message"}
         error.details = {"root_keys": sorted(set(payload) & known)}
         if isinstance(payload.get("data"), dict):
             error.details["data_keys"] = sorted(set(payload["data"]) & known)
