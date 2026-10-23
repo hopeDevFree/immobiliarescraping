@@ -8,3 +8,4 @@ flask
 psycopg2
 geopy
 playwright
+playwright-stealth
