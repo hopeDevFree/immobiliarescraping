@@ -54,57 +54,37 @@ class AccessScanner:
         if self.started:
             return await self.repeat(executable, profile_dir)
         self.started = True
-        self.report["state"] = "testing_http"
-        self.publish()
-        try:
-            results = await asyncio.to_thread(probe_http)
-            self.report["experiments"].extend(results["results"])
-            self.publish()
-            for entry in results["results"]:
-                if not entry.get("recognized_results"):
-                    continue
-                method = {"method": "http", "profile": entry["profile"], "url": entry["url"]}
-                try:
-                    rows = await asyncio.to_thread(scan_http, entry["profile"], entry["url"])
-                except Exception as exc:
-                    entry["complete_scan"] = {"status": "failed", "error_type": type(exc).__name__}
-                    self.publish()
-                else:
-                    entry["complete_scan"] = {"status": "ok", "total": len(rows)}
-                    return self.choose(method, rows)
-        except Exception as exc:
-            self.report["experiments"].append({"method": "http", "error_type": type(exc).__name__})
-            self.publish()
 
+        # Andiamo direttamente a testare il reader, evitando test HTTP rumorosi e Chromium
         self.report["state"] = "testing_reader"
         self.publish()
+
         for transport in READER_TRANSPORTS:
             try:
                 rows = await asyncio.to_thread(scan_reader, transport=transport)
             except Exception as exc:
-                self.report["experiments"].append({"method": "reader", "transport": transport, "status": "failed", **error_evidence(exc)})
+                self.report["experiments"].append({
+                    "method": "reader",
+                    "transport": transport,
+                    "status": "failed",
+                    **error_evidence(exc)
+                })
                 self.publish()
-                # Changing client libraries cannot clear a rate limit or a
-                # documented access restriction from the Reader itself.
                 if isinstance(exc, HttpScanError) and exc.status in (402, 429, 451):
                     break
             else:
-                self.report["experiments"].append({"method": "reader", "transport": transport, "status": "ok", "total": len(rows)})
+                self.report["experiments"].append({
+                    "method": "reader",
+                    "transport": transport,
+                    "status": "ok",
+                    "total": len(rows)
+                })
                 return self.choose({"method": "reader", "transport": transport}, rows)
 
-        for variant in VARIANTS:
-            self.report["state"] = "testing_" + variant
-            self.publish()
-            result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", variant)
-            rows = result.pop("listings", None)
-            self.report["experiments"].append(result)
-            self.publish()
-            if result["status"] == "ok" and rows is not None:
-                return self.choose({"method": "browser", "variant": variant}, rows)
-
+        # Se il reader fallisce, ci fermiamo qui senza lanciare Chromium
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError("SEARCH_BLOCKED: bounded free access comparison found no complete search; see /diagnostics")
+        raise RuntimeError("READER_FAILED: Impossibile recuperare gli annunci tramite reader.")
 
     async def repeat(self, executable, profile_dir):
         # Do not repeat the matrix or repeatedly launch browsers from a blocked
@@ -116,7 +96,8 @@ class AccessScanner:
             elif method["method"] == "reader":
                 rows = await asyncio.to_thread(scan_reader, transport=method.get("transport", "curl"))
             else:
-                result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", method["variant"])
+                result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles",
+                                             method["variant"])
                 rows = result.pop("listings", None)
                 if result["status"] != "ok" or rows is None:
                     self.report["last_browser_result"] = result
