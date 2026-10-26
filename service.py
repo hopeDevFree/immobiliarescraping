@@ -135,14 +135,18 @@ class Store:
         if len(identifiers) != len(rows):
             raise ValueError("Duplicate listing IDs in scan")
         now = utc_now()
+        new_rows = []
         with self.connect() as db:
             previous = {r["id"]: r for r in db.execute("SELECT * FROM listings")}
             added = changed = 0
             for row in rows:
                 payload = json.dumps(row, sort_keys=True, ensure_ascii=False, allow_nan=False)
                 old = previous.get(row["id"])
-                added += int(old is None)
-                changed += int(old is not None and (old["payload"] != payload or not old["active"]))
+                if old is None:
+                    added += 1
+                    new_rows.append(row)
+                else:
+                    changed += int(old["payload"] != payload or not old["active"])
                 db.execute("""
                     INSERT INTO listings (id, payload, first_seen, last_seen, active)
                     VALUES (?, ?, ?, ?, 1)
@@ -155,7 +159,11 @@ class Store:
                 INSERT INTO scans (checked_at, ok, total, added, changed, removed)
                 VALUES (?, 1, ?, ?, ?, ?)
             """, (now, len(rows), added, changed, len(missing)))
-        return {"total": len(rows), "added": added, "changed": changed, "removed": len(missing)}
+        return {
+            "total": len(rows), "added": added, "changed": changed,
+            "removed": len(missing), "new_rows": new_rows,
+            "first_population": not previous,
+        }
 
     def failure(self, error):
         with self.connect() as db:
@@ -184,33 +192,18 @@ def run_once(store, executable, profile_dir, scanner=scan):
     try:
         rows = asyncio.run(scanner(executable, profile_dir))
         result = store.save(rows)
+        new_rows = result.pop("new_rows", [])
+        first = result.pop("first_population", False)
         logger.info("SCAN_OK %s", json.dumps(result))
-
-        # Notifica Telegram
-        now = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-        if result["added"] or result["changed"] or result["removed"]:
-            msg = (
-                f"✅ <b>Scan OK</b> ({now})\n"
-                f"📊 Totale: {result['total']}\n"
-                f"➕ Nuovi: {result['added']}\n"
-                f"🔄 Modificati: {result['changed']}\n"
-                f"➖ Rimossi: {result['removed']}"
-            )
-        else:
-            msg = f"✅ Scan OK ({now}): {result['total']} annunci, nessuna novità"
-        notifier.notify(msg)
-
+        try:
+            notify_new_listings(new_rows, first_population=first)
+        except Exception:
+            # Il dato è già salvato: una notifica fallita non deve far fallire la scan.
+            logger.exception("NOTIFY_FAILED (dati salvati comunque)")
         return True
     except Exception as exc:
         logger.exception("SCAN_FAILED: existing listings preserved")
         store.failure(exc)
-
-        # Notifica Telegram per il fallimento
-        now = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-        error_short = str(exc)[:300]
-        msg = f"❌ <b>Scan FALLITA</b> ({now})\n🚫 {error_short}"
-        notifier.notify(msg)
-
         return False
 
 
