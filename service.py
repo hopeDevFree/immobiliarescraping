@@ -13,6 +13,7 @@ import urllib.request
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from notifier import notify_new_listings
 
 from scraper import scan
 
