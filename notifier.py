@@ -9,8 +9,9 @@ import httpx
 logger = logging.getLogger(__name__)
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
-MAX_LISTINGS_PER_MESSAGE = 10  # oltre, dividi in più messaggi
-AGGREGATE_THRESHOLD = 3  # <=3 nuovi: un messaggio per annuncio
+BASE_URL = "https://www.immobiliare.it"
+MAX_LISTINGS_PER_MESSAGE = 10
+AGGREGATE_THRESHOLD = 3
 
 
 def _send(html_text):
@@ -40,18 +41,44 @@ def _esc(value):
 
 
 def _price(row):
-    value = row.get("price") or row.get("prezzo")
+    value = row.get("rent_eur") or row.get("price") or row.get("prezzo")
     if isinstance(value, (int, float)):
         return f"€{value:,.0f}".replace(",", ".")
     return _esc(value)
 
 
-def _listing_block(row, index=None):
-    title = row.get("title") or row.get("titolo") or "Annuncio"
+def _absolute_url(row):
     url = row.get("url") or row.get("link")
-    zone = row.get("zone") or row.get("zona") or row.get("neighborhood")
-    surface = row.get("surface") or row.get("superficie") or row.get("mq")
-    rooms = row.get("rooms") or row.get("locali") or row.get("stanze")
+    if not url:
+        return None
+    url = str(url)
+    if url.startswith("http"):
+        return url
+    if url.startswith("/"):
+        return BASE_URL + url
+    return f"{BASE_URL}/{url.lstrip('/')}"
+
+
+def _zone_label(row):
+    # Nel payload lista non c'è "zone". Usa la distanza se disponibile,
+    # altrimenti mostra la prima feature utile. Adatta le chiavi a
+    # search_config.distance_from_volla se i nomi sono diversi.
+    for key in ("distance_from_volla_km", "distance_km", "distance"):
+        value = row.get(key)
+        if isinstance(value, (int, float)):
+            return f"{value:.1f} km dal centro"
+    features = row.get("features")
+    if isinstance(features, list) and features:
+        return ", ".join(str(f) for f in features[:2])
+    return None
+
+
+def _listing_block(row, index=None):
+    title = row.get("title") or "Annuncio"
+    url = _absolute_url(row)
+    zone = _zone_label(row)
+    surface = row.get("surface")
+    rooms = row.get("rooms")
 
     prefix = f"{index}. " if index else ""
     lines = [f"🏠 <b>{prefix}{_esc(title)}</b>"]
@@ -75,16 +102,11 @@ def notify_new_listings(new_rows, first_population=False):
         return
     count = len(new_rows)
 
-    # Primo popolamento (DB vuoto / deploy): un solo messaggio, con l'ultimo
-    # annuncio come esempio formattato (così si testa _listing_block).
     if first_population:
         logger.info("NOTIFY_SKIPPED first_population total=%s", count)
         header = (f"✅ Prima scansione completata: <b>{count}</b> annunci salvati.\n"
-                  f"Ecco l'ultimo come esempio:\n\n")
-        if new_rows:
-            _send(header + _listing_block(new_rows[-1]))
-        else:
-            _send(header.rstrip())
+                  f"Ecco un esempio formattato:\n\n")
+        _send(header + _listing_block(new_rows[0]))
         return
 
     if count <= AGGREGATE_THRESHOLD:
