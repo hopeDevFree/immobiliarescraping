@@ -40,7 +40,6 @@ def _esc(value):
 
 
 def _price(row):
-    # Adatta le chiavi a listing_parser.py
     value = row.get("price") or row.get("prezzo")
     if isinstance(value, (int, float)):
         return f"€{value:,.0f}".replace(",", ".")
@@ -76,11 +75,16 @@ def notify_new_listings(new_rows, first_population=False):
         return
     count = len(new_rows)
 
-    # Primo popolamento (DB vuoto / deploy): nessuna raffica di link.
+    # Primo popolamento (DB vuoto / deploy): un solo messaggio, con l'ultimo
+    # annuncio come esempio formattato (così si testa _listing_block).
     if first_population:
         logger.info("NOTIFY_SKIPPED first_population total=%s", count)
-        _send(f"✅ Prima scansione completata: <b>{count}</b> annunci salvati. "
-              f"Da ora riceverai solo i nuovi.")
+        header = (f"✅ Prima scansione completata: <b>{count}</b> annunci salvati.\n"
+                  f"Ecco l'ultimo come esempio:\n\n")
+        if new_rows:
+            _send(header + _listing_block(new_rows[-1]))
+        else:
+            _send(header.rstrip())
         return
 
     if count <= AGGREGATE_THRESHOLD:
