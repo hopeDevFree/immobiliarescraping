@@ -5,3 +5,4 @@ nodriver==0.50.6
 curl_cffi==0.16.3
 playwright-stealth
 httpx
+psycopg2-binary>=2.9.9

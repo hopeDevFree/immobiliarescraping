@@ -14,6 +14,28 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from notifier import notify_new_listings
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import json
+import logging
+import os
+from pathlib import Path
+import sqlite3
+
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
+
+logger = logging.getLogger(__name__)
+
+
+def utc_now():
+    return datetime.now(timezone.utc).isoformat()
+
 
 from scraper import scan
 
@@ -104,9 +126,18 @@ notifier = TelegramNotifier()
 
 
 class Store:
-    def __init__(self, path):
-        self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, path=None, database_url=None):
+        self.database_url = database_url or os.environ.get("DATABASE_URL")
+        self.is_postgres = bool(self.database_url and HAS_PSYCOPG2)
+
+        if not self.is_postgres:
+            self.path = Path(path or "listings.sqlite3")
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._init_sqlite()
+        else:
+            logger.info("Store: connessione a Supabase (PostgreSQL) attiva")
+
+    def _init_sqlite(self):
         with self.connect() as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS listings (
@@ -123,23 +154,50 @@ class Store:
 
     @contextmanager
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=15)
-        db.row_factory = sqlite3.Row
-        try:
-            with db:
-                yield db
-        finally:
-            db.close()
+        if self.is_postgres:
+            conn = psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
+            try:
+                with conn:
+                    with conn.cursor() as cur:
+                        yield cur
+            finally:
+                conn.close()
+        else:
+            db = sqlite3.connect(self.path, timeout=15)
+            db.row_factory = sqlite3.Row
+            try:
+                with db:
+                    yield db
+            finally:
+                db.close()
 
     def save(self, rows):
         identifiers = {row["id"] for row in rows}
         if len(identifiers) != len(rows):
             raise ValueError("Duplicate listing IDs in scan")
+
         now = utc_now()
         new_rows = []
+        param = "%s" if self.is_postgres else "?"
+
         with self.connect() as db:
-            previous = {r["id"]: r for r in db.execute("SELECT * FROM listings")}
+            # 1. Recupero annunci precedenti
+            db.execute("SELECT id, payload, active FROM listings")
+            previous_rows = db.fetchall()
+            previous = {r["id"]: dict(r) for r in previous_rows}
+
             added = changed = 0
+
+            # 2. Upsert degli annunci correnti
+            upsert_query = f"""
+                INSERT INTO listings (id, payload, first_seen, last_seen, active)
+                VALUES ({param}, {param}, {param}, {param}, 1)
+                ON CONFLICT(id) DO UPDATE SET 
+                    payload = EXCLUDED.payload,
+                    last_seen = EXCLUDED.last_seen, 
+                    active = 1
+            """
+
             for row in rows:
                 payload = json.dumps(row, sort_keys=True, ensure_ascii=False, allow_nan=False)
                 old = previous.get(row["id"])
@@ -148,44 +206,60 @@ class Store:
                     new_rows.append(row)
                 else:
                     changed += int(old["payload"] != payload or not old["active"])
-                db.execute("""
-                    INSERT INTO listings (id, payload, first_seen, last_seen, active)
-                    VALUES (?, ?, ?, ?, 1)
-                    ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,
-                        last_seen=excluded.last_seen, active=1
-                """, (row["id"], payload, now, now))
+
+                db.execute(upsert_query, (row["id"], payload, now, now))
+
+            # 3. Disattiva annunci non più presenti
             missing = [i for i, r in previous.items() if r["active"] and i not in identifiers]
-            db.executemany("UPDATE listings SET active=0 WHERE id=?", [(i,) for i in missing])
-            db.execute("""
+            if missing:
+                update_query = f"UPDATE listings SET active=0 WHERE id={param}"
+                db.executemany(update_query, [(i,) for i in missing])
+
+            # 4. Registra scansione riuscita
+            scan_query = f"""
                 INSERT INTO scans (checked_at, ok, total, added, changed, removed)
-                VALUES (?, 1, ?, ?, ?, ?)
-            """, (now, len(rows), added, changed, len(missing)))
+                VALUES ({param}, 1, {param}, {param}, {param}, {param})
+            """
+            db.execute(scan_query, (now, len(rows), added, changed, len(missing)))
+
         return {
-            "total": len(rows), "added": added, "changed": changed,
-            "removed": len(missing), "new_rows": new_rows,
+            "total": len(rows),
+            "added": added,
+            "changed": changed,
+            "removed": len(missing),
+            "new_rows": new_rows,
             "first_population": not previous,
         }
 
     def failure(self, error):
+        param = "%s" if self.is_postgres else "?"
+        query = f"INSERT INTO scans (checked_at, ok, error) VALUES ({param}, 0, {param})"
         with self.connect() as db:
-            db.execute(
-                "INSERT INTO scans (checked_at, ok, error) VALUES (?, 0, ?)",
-                (utc_now(), str(error)[:1000]),
-            )
+            db.execute(query, (utc_now(), str(error)[:1000]))
 
     def status(self):
         with self.connect() as db:
-            last = db.execute("SELECT * FROM scans ORDER BY id DESC LIMIT 1").fetchone()
-            success = db.execute(
-                "SELECT checked_at FROM scans WHERE ok=1 ORDER BY id DESC LIMIT 1"
-            ).fetchone()
-            count = db.execute(
-                "SELECT COUNT(*) FROM listings WHERE active=1"
-            ).fetchone()[0]
+            db.execute("SELECT * FROM scans ORDER BY id DESC LIMIT 1")
+            last = db.fetchone()
+
+            db.execute("SELECT checked_at FROM scans WHERE ok=1 ORDER BY id DESC LIMIT 1")
+            success = db.fetchone()
+
+            db.execute("SELECT COUNT(*) AS cnt FROM listings WHERE active=1")
+            count = db.fetchone()
+
+        last_success_val = None
+        if success:
+            last_success_val = success["checked_at"] if self.is_postgres else success[0]
+
+        active_count = 0
+        if count:
+            active_count = count["cnt"] if self.is_postgres else count[0]
+
         return {
             "last_scan": dict(last) if last else None,
-            "last_success": success[0] if success else None,
-            "active_listings": count,
+            "last_success": str(last_success_val) if last_success_val else None,
+            "active_listings": active_count,
         }
 
 
