@@ -30,8 +30,6 @@ def _get_headers():
 
 
 def _get_reader(url, transport="curl"):
-    from curl_cffi import requests
-
     headers = _get_headers()
     max_retries = 3
 
@@ -51,6 +49,7 @@ def _get_reader(url, transport="curl"):
                         text=response.read(4 * 1024 * 1024).decode("utf-8", errors="replace"),
                     )
             else:
+                from curl_cffi import requests
                 options = {"impersonate": "chrome"} if transport == "chrome" else {}
                 resp_obj = requests.get(
                     READER_PREFIX + url,
@@ -60,14 +59,7 @@ def _get_reader(url, transport="curl"):
                     **options,
                 )
 
-            # Se riceviamo un 429 (rate limit), aspettiamo e riproviamo prima di andare in errore
-            if resp_obj.status_code == 429 and attempt < max_retries - 1:
-                wait_time = 7 * (attempt + 1)
-                logger.warning("Jina 429 rate limit hit. Retrying in %ss (attempt %s/%s)...", wait_time, attempt + 1,
-                               max_retries)
-                time.sleep(wait_time)
-                continue
-
+            # Ritorna la risposta ottenuta
             return resp_obj
 
         except Exception as exc:
@@ -78,7 +70,6 @@ def _get_reader(url, transport="curl"):
             raise HttpScanError("reader_transport",
                                 transport_error_code=code if isinstance(code, int) else None) from None
 
-    # Linea di sicurezza per il linter (se tutti i tentativi dovessero esaurirsi)
     raise HttpScanError("reader_transport")
 
 

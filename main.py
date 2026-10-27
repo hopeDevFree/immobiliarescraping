@@ -33,13 +33,12 @@ def create_app(store, worker, interval):
 
     @app.get("/diagnostics")
     def diagnostics():
+        data_dir = Path(os.environ.get("DATA_DIR", "data"))
         try:
-            report = json.loads((store.path.parent / "access-probes.json").read_text(encoding="utf-8"))
-        except (FileNotFoundError, ValueError):
+            report = json.loads((data_dir / "access-probes.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError, OSError):
             report = {"state": "pending"}
         return jsonify(report)
-
-    return app
 
 
 def main():

@@ -18,7 +18,6 @@ from urllib.parse import parse_qs, unquote_plus, urljoin, urlsplit, urlunsplit
 
 from search_config import RADIUS_URL
 
-
 API_PATHS = (
     "/api-next/search-list/listings/",
     "/api-next/search-list/real-estates/",
@@ -91,7 +90,8 @@ def _captcha_object(payload):
         return False
     target = urlsplit(payload["url"])
     host = target.hostname or ""
-    return (host == "captcha-delivery.com" or host.endswith(".captcha-delivery.com")) and target.path.startswith("/captcha/")
+    return (host == "captcha-delivery.com" or host.endswith(".captcha-delivery.com")) and target.path.startswith(
+        "/captcha/")
 
 
 def _integer(value):
@@ -155,14 +155,24 @@ def parse_search_json(payload):
                 malformed = True
                 break
             identity = _integer(estate["id"])
-            seo = item.get("seo", {})
-            url = seo.get("url") if isinstance(seo, dict) else None
-            price = estate.get("price", {})
+            seo = item.get("seo", {}) if isinstance(item.get("seo"), dict) else {}
+            url = seo.get("url")
+            price = estate.get("price", {}) if isinstance(estate.get("price"), dict) else {}
+
+            # Estrazione caratteristiche e descrizione dal payload JSON
+            properties = estate.get("properties", []) if isinstance(estate.get("properties"), list) else []
+            prop = properties[0] if properties and isinstance(properties[0], dict) else {}
+            description = prop.get("description") or prop.get("caption") or seo.get("description")
+
             rows.append({
                 "id": identity,
                 "title": estate.get("title") if isinstance(estate.get("title"), str) else None,
-                "url": urljoin(RADIUS_URL, url) if isinstance(url, str) else f"https://www.immobiliare.it/annunci/{identity}/",
-                "rent_eur": _price(price.get("value")) if isinstance(price, dict) else None,
+                "url": urljoin(RADIUS_URL, url) if isinstance(url,
+                                                              str) else f"https://www.immobiliare.it/annunci/{identity}/",
+                "rent_eur": _price(price.get("value")),
+                "description": description if isinstance(description, str) else None,
+                "surface": prop.get("surface"),
+                "rooms": prop.get("rooms"),
             })
         if not malformed and total is not None and (rows or total == 0):
             if total < len(rows) or (total == 0 and rows):
@@ -222,7 +232,8 @@ def _decode_response(response, url):
                 if number:
                     pages.add(number)
     if response.status_code != 200:
-        raise HttpScanError("blocked" if response.status_code in (401, 403, 429) else "http_status", response.status_code)
+        raise HttpScanError("blocked" if response.status_code in (401, 403, 429) else "http_status",
+                            response.status_code)
     if parsed is None:
         raise HttpScanError("unrecognized_results", response.status_code)
     return parsed, pages, title, json_type

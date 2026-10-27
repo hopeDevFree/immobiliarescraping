@@ -82,12 +82,17 @@ def inspect_html(html, url):
                     properties = estate.get("properties", [])
                     prop = properties[0] if properties else {}
                     result["listings"].append({
-                        "id": estate.get("id"), "title": estate.get("title"),
+                        "id": estate.get("id"),
+                        "title": estate.get("title"),
                         "url": item.get("seo", {}).get("url"),
                         "rent_eur": estate.get("price", {}).get("value"),
-                        "surface": prop.get("surface"), "rooms": prop.get("rooms"),
+                        "description": prop.get("description") or prop.get("caption") or item.get("seo", {}).get(
+                            "description"),
+                        "surface": prop.get("surface"),
+                        "rooms": prop.get("rooms"),
                         "floor": prop.get("floor", {}).get("value"),
                         "features": prop.get("ga4features", []),
+                        "condominium_expenses": prop.get("costs", {}).get("condominiumExpenses"),
                         "total_monthly_cost_eur": None,
                         "furniture_inventory": None,
                         **distance_from_volla(prop.get("location") or {}),
