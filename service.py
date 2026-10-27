@@ -1,5 +1,5 @@
 """Persistent scan history and a single sequential scheduler."""
-
+from scraper_subito import fetch_subito_listings
 import asyncio
 import json
 import logging
@@ -265,7 +265,11 @@ class Store:
 
 def run_once(store, executable, profile_dir, scanner=scan):
     try:
-        rows = asyncio.run(scanner(executable, profile_dir))
+        # Scansione Immobiliare + scansione Subito
+        imm_rows = asyncio.run(scanner(executable, profile_dir))
+        subito_rows = fetch_subito_listings()
+        rows = imm_rows + subito_rows
+
         result = store.save(rows)
         new_rows = result.pop("new_rows", [])
         first = result.pop("first_population", False)
@@ -273,7 +277,6 @@ def run_once(store, executable, profile_dir, scanner=scan):
         try:
             notify_new_listings(new_rows, first_population=first)
         except Exception:
-            # Il dato è già salvato: una notifica fallita non deve far fallire la scan.
             logger.exception("NOTIFY_FAILED (dati salvati comunque)")
         return True
     except Exception as exc:
