@@ -40,6 +40,8 @@ def create_app(store, worker, interval):
             report = {"state": "pending"}
         return jsonify(report)
 
+    return app
+
 
 def main():
     directory = Path(os.environ.get("DATA_DIR", "data"))
