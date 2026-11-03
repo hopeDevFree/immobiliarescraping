@@ -55,14 +55,25 @@ class AccessScanner:
             return await self.repeat(executable, profile_dir)
         self.started = True
 
-        # Andiamo direttamente a testare il reader, evitando test HTTP rumorosi e Chromium
+        # Log fondamentale per verificare la chiave Jina su Render
+        has_jina = bool(os.environ.get("JINA_API_KEY"))
+        logger.info("Avvio scansione. JINA_API_KEY configurata: %s", has_jina)
+
         self.report["state"] = "testing_reader"
         self.publish()
 
+        last_error = None
         for transport in READER_TRANSPORTS:
             try:
+                logger.info("Test reader con transport='%s'...", transport)
                 rows = await asyncio.to_thread(scan_reader, transport=transport)
             except Exception as exc:
+                last_error = exc
+                details = getattr(exc, "details", None)
+                logger.error(
+                    "Test reader FALLITO con transport='%s': %r | Dettagli: %s",
+                    transport, exc, details, exc_info=True
+                )
                 self.report["experiments"].append({
                     "method": "reader",
                     "transport": transport,
@@ -81,14 +92,11 @@ class AccessScanner:
                 })
                 return self.choose({"method": "reader", "transport": transport}, rows)
 
-        # Se il reader fallisce, ci fermiamo qui senza lanciare Chromium
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError("READER_FAILED: Impossibile recuperare gli annunci tramite reader.")
+        raise RuntimeError(f"READER_FAILED: Impossibile recuperare annunci. Ultimo errore: {last_error}") from last_error
 
     async def repeat(self, executable, profile_dir):
-        # Do not repeat the matrix or repeatedly launch browsers from a blocked
-        # network. Retry one bounded Reader scan if no method has worked yet.
         method = self.selected or {"method": "reader", "transport": "curl"}
         try:
             if method["method"] == "http":
@@ -104,8 +112,6 @@ class AccessScanner:
                     raise RuntimeError("SEARCH_BLOCKED: " + result.get("reason", "search_unavailable"))
             return self.choose(method, rows)
         except Exception as exc:
-            # One lighter fallback can recover an HTTP method that becomes
-            # unavailable. The full startup comparison is never repeated.
             if method["method"] == "http":
                 try:
                     rows = await asyncio.to_thread(scan_reader)
