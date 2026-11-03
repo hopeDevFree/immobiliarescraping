@@ -8,6 +8,10 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+# Disattiva i log dettagliati delle richieste HTTP in uscita per non mostrare il token Telegram
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 BASE_URL = "https://www.immobiliare.it"
 MAX_LISTINGS_PER_MESSAGE = 10
