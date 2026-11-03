@@ -1,5 +1,6 @@
 """Persistent scan history and a single sequential scheduler."""
 from scraper_subito import fetch_subito_listings
+from scraper_idealista import fetch_idealista_listings
 import asyncio
 import json
 import logging
@@ -265,10 +266,25 @@ class Store:
 
 def run_once(store, executable, profile_dir, scanner=scan):
     try:
-        # Scansione Immobiliare + scansione Subito
+        # 1. Scansione Immobiliare.it
         imm_rows = asyncio.run(scanner(executable, profile_dir))
-        subito_rows = fetch_subito_listings()
-        rows = imm_rows + subito_rows
+
+        # 2. Scansione Subito.it (protetta)
+        try:
+            subito_rows = fetch_subito_listings()
+        except Exception as e:
+            logger.warning("Subito non disponibile in questo ciclo: %s", e)
+            subito_rows = []
+
+        # 3. Scansione Idealista (protetta con raggio matematico di 5 km)
+        try:
+            idealista_rows = fetch_idealista_listings()
+        except Exception as e:
+            logger.warning("Idealista non disponibile in questo ciclo: %s", e)
+            idealista_rows = []
+
+        # Unione di tutti gli annunci
+        rows = imm_rows + subito_rows + idealista_rows
 
         result = store.save(rows)
         new_rows = result.pop("new_rows", [])
