@@ -7,12 +7,15 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from access_browser import VARIANTS, probe_browser
+from access_browser import probe_browser
 from access_http import HttpScanError, probe_http, scan_http
 from access_reader import READER_TRANSPORTS, scan_reader
 from search_config import RADIUS_URL
 
 logger = logging.getLogger(__name__)
+
+# Definite qui per evitare qualsiasi errore di importazione circolare
+VARIANTS = ("direct_tab", "home_then_search", "plain_start")
 
 
 def error_evidence(exc):
@@ -47,7 +50,7 @@ class AccessScanner:
         self.report.update(state="working", selected=method)
         self.report["last_scan"] = {"status": "ok", "total": len(rows), "ids": [r["id"] for r in rows]}
         self.publish()
-        logger.info("ACCESS_METHOD_SELECTED %s total=%s", method["method"], len(rows))
+        logger.info("ACCESS_METHOD_SELECTED %s total=%s", method.get("method") or method.get("variant"), len(rows))
         return rows
 
     async def __call__(self, executable, profile_dir):
@@ -55,25 +58,16 @@ class AccessScanner:
             return await self.repeat(executable, profile_dir)
         self.started = True
 
-        # Log fondamentale per verificare la chiave Jina su Render
-        has_jina = bool(os.environ.get("JINA_API_KEY"))
-        logger.info("Avvio scansione. JINA_API_KEY configurata: %s", has_jina)
-
+        # 1. Testiamo prima il reader (veloce)
         self.report["state"] = "testing_reader"
         self.publish()
 
-        last_error = None
         for transport in READER_TRANSPORTS:
             try:
                 logger.info("Test reader con transport='%s'...", transport)
                 rows = await asyncio.to_thread(scan_reader, transport=transport)
             except Exception as exc:
-                last_error = exc
-                details = getattr(exc, "details", None)
-                logger.error(
-                    "Test reader FALLITO con transport='%s': %r | Dettagli: %s",
-                    transport, exc, details, exc_info=True
-                )
+                logger.warning("Reader transport='%s' non riuscito (DataDome/Captcha rilevato): %s", transport, exc)
                 self.report["experiments"].append({
                     "method": "reader",
                     "transport": transport,
@@ -81,8 +75,8 @@ class AccessScanner:
                     **error_evidence(exc)
                 })
                 self.publish()
-                if isinstance(exc, HttpScanError) and exc.status in (402, 429, 451):
-                    break
+                # Se DataDome intercetta il reader, passiamo a Chromium
+                break
             else:
                 self.report["experiments"].append({
                     "method": "reader",
@@ -92,33 +86,66 @@ class AccessScanner:
                 })
                 return self.choose({"method": "reader", "transport": transport}, rows)
 
+        # 2. Se il Reader è bloccato da DataDome, avviamo Chromium stealth (nodriver)
+        logger.info("Reader bloccato da DataDome. Avvio scansione con Chromium anti-detect...")
+        self.report["state"] = "testing_browser"
+        self.publish()
+
+        profiles_root = Path(profile_dir).parent / "access-profiles"
+        for variant in VARIANTS:
+            logger.info("Tentativo Browser con variante='%s'...", variant)
+            try:
+                result = await probe_browser(executable, profiles_root, variant)
+                status = result.get("status")
+                if status == "ok" and result.get("listings") is not None:
+                    rows = result["listings"]
+                    logger.info("Browser variante '%s' RIUSCITO! Trovati %d annunci", variant, len(rows))
+                    self.report["experiments"].append({
+                        "method": "browser",
+                        "variant": variant,
+                        "status": "ok",
+                        "total": len(rows)
+                    })
+                    return self.choose({"method": "browser", "variant": variant}, rows)
+                else:
+                    logger.warning("Browser variante '%s' non riuscito: reason=%s (status=%s)", variant, result.get("reason"), status)
+                    self.report["experiments"].append({
+                        "method": "browser",
+                        "variant": variant,
+                        "status": "failed",
+                        "reason": result.get("reason")
+                    })
+                    self.publish()
+            except Exception as exc:
+                logger.error("Errore durante test browser variante '%s': %r", variant, exc, exc_info=True)
+                self.report["experiments"].append({
+                    "method": "browser",
+                    "variant": variant,
+                    "status": "failed",
+                    "reason": str(exc)
+                })
+                self.publish()
+
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError(f"READER_FAILED: Impossibile recuperare annunci. Ultimo errore: {last_error}") from last_error
+        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono stati bloccati da DataDome.")
 
     async def repeat(self, executable, profile_dir):
-        method = self.selected or {"method": "reader", "transport": "curl"}
+        method = self.selected or {"method": "browser", "variant": "home_then_search"}
         try:
-            if method["method"] == "http":
-                rows = await asyncio.to_thread(scan_http, method["profile"], method["url"])
-            elif method["method"] == "reader":
+            if method.get("method") == "reader":
                 rows = await asyncio.to_thread(scan_reader, transport=method.get("transport", "curl"))
+            elif method.get("method") == "http":
+                rows = await asyncio.to_thread(scan_http, method["profile"], method["url"])
             else:
-                result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles",
-                                             method["variant"])
+                variant = method.get("variant", "home_then_search")
+                result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", variant)
                 rows = result.pop("listings", None)
-                if result["status"] != "ok" or rows is None:
+                if result.get("status") != "ok" or rows is None:
                     self.report["last_browser_result"] = result
                     raise RuntimeError("SEARCH_BLOCKED: " + result.get("reason", "search_unavailable"))
             return self.choose(method, rows)
         except Exception as exc:
-            if method["method"] == "http":
-                try:
-                    rows = await asyncio.to_thread(scan_reader)
-                except Exception:
-                    pass
-                else:
-                    return self.choose({"method": "reader", "transport": "curl"}, rows)
             self.report["state"] = "unavailable"
             self.report["last_scan"] = {"status": "failed", **error_evidence(exc)}
             self.publish()

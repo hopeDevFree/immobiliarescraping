@@ -12,6 +12,7 @@ from access_reader import READER_TRANSPORTS, scan_reader
 from search_config import RADIUS_URL
 
 logger = logging.getLogger(__name__)
+VARIANTS = ("direct_tab", "home_then_search", "plain_start")
 
 
 def error_evidence(exc):
@@ -106,7 +107,8 @@ class AccessScanner:
                     })
                     return self.choose({"method": "browser", "variant": variant}, rows)
                 else:
-                    logger.warning("Browser variante '%s' non riuscito: reason=%s (status=%s)", variant, result.get("reason"), status)
+                    logger.warning("Browser variante '%s' non riuscito: reason=%s (status=%s)", variant,
+                                   result.get("reason"), status)
                     self.report["experiments"].append({
                         "method": "browser",
                         "variant": variant,
