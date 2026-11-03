@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>La Mini Home – Personaggio e Icona</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #090818;
+      font-family: 'Outfit', sans-serif;
+      color: #ECEAF5;
+      padding: 24px;
+    }
+
+    .card {
+      width: 920px;
+      height: 590px;
+      background: radial-gradient(130% 130% at 30% 20%, #1A1742 0%, #0D0C26 65%, #050410 100%);
+      border-radius: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      padding: 48px;
+      gap: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Bagliore d'ambiente */
+    .card::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(255, 120, 60, 0.12) 0%, rgba(100, 80, 240, 0.06) 50%, transparent 70%);
+      top: 50%;
+      left: 28%;
+      transform: translate(-50%, -55%);
+      pointer-events: none;
+      filter: blur(60px);
+    }
+
+    .stage {
+      flex: 1.25;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* GERARCHIA DEL PERSONAGGIO */
+    .house-root {
+      transform-origin: 100px 225px;
+    }
+
+    .house-body-group {
+      transform-origin: 100px 215px;
+    }
+
+    .foot-left { transform-origin: 78px 215px; }
+    .foot-right { transform-origin: 122px 215px; }
+
+    /* MODALITÀ 1: TROTTERELLA (Waddle da Clash Mini) */
+    .mode-waddle .house-body-group {
+      animation: waddleBody 1.1s ease-in-out infinite alternate;
+    }
+    .mode-waddle .foot-left {
+      animation: stepLeft 1.1s ease-in-out infinite;
+    }
+    .mode-waddle .foot-right {
+      animation: stepRight 1.1s ease-in-out infinite;
+    }
+    .mode-waddle .shadow-el {
+      animation: shadowWaddle 0.55s ease-in-out infinite alternate;
+    }
+
+    @keyframes waddleBody {
+      0%   { transform: rotate(-6deg) translateY(0); }
+      50%  { transform: rotate(0deg) translateY(-5px); }
+      100% { transform: rotate(6deg) translateY(0); }
+    }
+
+    @keyframes stepLeft {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-9px) rotate(-12deg); }
+    }
+
+    @keyframes stepRight {
+      0%, 100% { transform: translateY(-9px) rotate(12deg); }
+      50%      { transform: translateY(0); }
+    }
+
+    @keyframes shadowWaddle {
+      0%   { transform: translateX(-4px) scale(0.96); }
+      100% { transform: translateX(4px) scale(1.04); }
+    }
+
+    /* MODALITÀ 2: CURIOSA (Ispezione e respiro) */
+    .mode-curious .house-body-group {
+      animation: curiousInspect 4.5s ease-in-out infinite;
+    }
+    .mode-curious .shadow-el {
+      animation: shadowCurious 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes curiousInspect {
+      0%, 15%   { transform: rotate(0deg) scale(1, 1); }
+      30%, 50%  { transform: rotate(8deg) translateY(-2px) scale(1.02, 0.98); } /* Scatto curioso a destra */
+      65%, 85%  { transform: rotate(-7deg) translateY(-2px) scale(1.02, 0.98); } /* Scatto a sinistra */
+      100%      { transform: rotate(0deg) scale(1, 1); }
+    }
+
+    @keyframes shadowCurious {
+      0%   { transform: scale(1); opacity: 0.65; }
+      100% { transform: scale(1.05); opacity: 0.78; }
+    }
+
+    /* MODALITÀ 3: TROVATA! (Salto di gioia e sbuffo camino) */
+    .mode-happy .house-root {
+      animation: happyBounce 0.95s cubic-bezier(0.18, 0.89, 0.32, 1.25) infinite;
+    }
+    .mode-happy .smoke-puff {
+      animation: smokeBurst 0.95s ease-out infinite;
+    }
+    .mode-happy .shadow-el {
+      animation: shadowHappy 0.95s ease-in-out infinite;
+    }
+
+    @keyframes happyBounce {
+      0%, 100% { transform: translateY(0) scale(1.16, 0.84); }
+      38%      { transform: translateY(-55px) scale(0.9, 1.15) rotate(4deg); }
+      72%      { transform: translateY(0) scale(1.22, 0.78); }
+    }
+
+    @keyframes smokeBurst {
+      0%   { opacity: 0; transform: translate(66px, 60px) scale(0.3); }
+      40%  { opacity: 0.9; transform: translate(62px, 34px) scale(1); }
+      80%  { opacity: 0; transform: translate(58px, 16px) scale(1.4); }
+      100% { opacity: 0; }
+    }
+
+    @keyframes shadowHappy {
+      0%, 100% { transform: scale(1.2); opacity: 0.85; }
+      38%      { transform: scale(0.6); opacity: 0.25; }
+      72%      { transform: scale(1.3); opacity: 0.95; }
+    }
+
+    /* UI Bottoni */
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #C6C2DF;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #FFFFFF;
+    }
+
+    .btn.active {
+      background: #FF6E52;
+      border-color: #FF6E52;
+      color: #FFFFFF;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(255, 110, 82, 0.4);
+    }
+
+    /* Sidebar Icone e Design */
+    .sidebar {
+      width: 300px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 26px;
+      padding-left: 36px;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #FF8566;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .desc {
+      font-size: 13px;
+      color: #9D98BE;
+      line-height: 1.6;
+    }
+
+    .icons-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 18px;
+    }
+
+    .icon-tile-large {
+      width: 110px;
+      height: 110px;
+      border-radius: 26px;
+      background: linear-gradient(145deg, #2A2359, #151132);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-tile-small {
+      width: 54px;
+      height: 54px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #2A2359, #151132);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .glyph-box {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- STAGE PERSONAGGIO -->
+  <div class="stage">
+
+    <svg width="280" height="340" viewBox="0 0 200 270">
+      <defs>
+        <!-- Tetto Terracotta Morbido -->
+        <linearGradient id="roof-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FF8A6E" />
+          <stop offset="45%" stop-color="#FF6347" />
+          <stop offset="100%" stop-color="#D33F26" />
+        </linearGradient>
+
+        <!-- Mura Ceramica Notturna -->
+        <linearGradient id="wall-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#3A3078" />
+          <stop offset="55%" stop-color="#28205A" />
+          <stop offset="100%" stop-color="#18133C" />
+        </linearGradient>
+
+        <!-- Zampette cicciotte -->
+        <linearGradient id="foot-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#2E2568" />
+          <stop offset="100%" stop-color="#140F30" />
+        </linearGradient>
+
+        <!-- Luce Calda Finestra (Sunlitt Core) -->
+        <radialGradient id="sun-window" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#FFF8E0" />
+          <stop offset="40%" stop-color="#FFAE42" />
+          <stop offset="85%" stop-color="#FF6D1E" />
+          <stop offset="100%" stop-color="#D94C05" />
+        </radialGradient>
+
+        <!-- Bagliore diffuso sul pavimento -->
+        <radialGradient id="warm-floor-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FF9E3D" stop-opacity="0.32" />
+          <stop offset="100%" stop-color="#FF9E3D" stop-opacity="0" />
+        </radialGradient>
+
+        <filter id="shadow-blur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+
+        <filter id="glow-window" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Ombra morbida a terra -->
+      <g transform="translate(100 234)">
+        <ellipse class="shadow-el" cx="0" cy="0" rx="48" ry="11" fill="#04030D" filter="url(#shadow-blur)" />
+        <ellipse class="shadow-el" cx="0" cy="0" rx="28" ry="6.5" fill="#1B1448" opacity="0.6" filter="url(#shadow-blur)" />
+        <!-- Bagliore giallo riflesso sul pavimento davanti alla porta -->
+        <ellipse cx="0" cy="4" rx="34" ry="14" fill="url(#warm-floor-glow)" />
+      </g>
+
+      <!-- RADICE PERSONAGGIO -->
+      <g class="house-root">
+
+        <!-- ZAMPETTE CORTE E MORBIDE (dietro e sotto il corpo) -->
+        <g class="foot-left">
+          <rect x="70" y="206" width="18" height="22" rx="9" fill="url(#foot-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+          <!-- riflesso sul piedino -->
+          <ellipse cx="76" cy="216" rx="3" ry="5" fill="#FFFFFF" opacity="0.2" />
+        </g>
+        <g class="foot-right">
+          <rect x="112" y="206" width="18" height="22" rx="9" fill="url(#foot-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+          <ellipse cx="118" cy="216" rx="3" ry="5" fill="#FFFFFF" opacity="0.2" />
+        </g>
+
+        <!-- CORPO CASETTA (Mura + Tetto) -->
+        <g class="house-body-group">
+
+          <!-- MURA CICCIOTTE ARROTONDATE -->
+          <rect x="56" y="118" width="88" height="98" rx="22"
+                fill="url(#wall-grad)"
+                stroke="rgba(255,255,255,0.18)"
+                stroke-width="1.6" />
+
+          <!-- Ombra di occlusione sotto la grondaia -->
+          <path d="M58,124 L142,124" stroke="#0E0A24" stroke-width="5" opacity="0.5" />
+
+          <!-- FINESTRA TONDA LUMINOSA (Il "Cuore" della casa) -->
+          <g filter="url(#glow-window)">
+            <!-- Cornice in rilievo -->
+            <circle cx="100" cy="166" r="24" fill="#20184A" stroke="rgba(255,255,255,0.25)" stroke-width="1.8" />
+            <!-- Vetro satinato con luce calda Sunlitt -->
+            <circle cx="100" cy="166" r="20" fill="url(#sun-window)" />
+            <!-- Crociera stilizzata minimal della finestra -->
+            <path d="M100,147 L100,185 M81,166 L119,166" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity="0.38" />
+            <!-- Riflesso a bolla di vetro -->
+            <ellipse cx="94" cy="158" rx="4.5" ry="9" transform="rotate(-26 94 158)" fill="#FFFFFF" opacity="0.6" />
+          </g>
+
+          <!-- COMIGNOLO SUL TETTO -->
+          <rect x="66" y="66" width="15" height="26" rx="5"
+                fill="#C6361F"
+                stroke="rgba(255,255,255,0.2)"
+                stroke-width="1.2" />
+
+          <!-- Nuvola di fumo (animata in modalità gioia) -->
+          <circle class="smoke-puff" cx="0" cy="0" r="10" fill="#FFF4D6" opacity="0" />
+
+          <!-- TETTO A CAPPELLINO (Morbido, a spiovente stondato) -->
+          <path d="M44,124
+                   C44,124 93,66 100,66
+                   C107,66 156,124 156,124
+                   C160,129 154,136 146,136
+                   L54,136
+                   C46,136 40,129 44,124 Z"
+                fill="url(#roof-grad)"
+                stroke="rgba(255,255,255,0.3)"
+                stroke-width="1.8"
+                stroke-linejoin="round" />
+
+          <!-- Riflesso lucido convesso sul tetto -->
+          <path d="M56,122 C78,92 94,76 100,76"
+                fill="none"
+                stroke="#FFFFFF"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                opacity="0.38" />
+
+          <circle cx="100" cy="69" r="2.8" fill="#FFFFFF" opacity="0.8" />
+
+        </g>
+      </g>
+    </svg>
+
+    <!-- Pulsanti Modalità -->
+    <div class="controls">
+      <button class="btn active" onclick="setMode('mode-waddle', this)">✦ Trotterella (Cerca)</button>
+      <button class="btn" onclick="setMode('mode-curious', this)">✦ Curiosa (Ispeziona)</button>
+      <button class="btn" onclick="setMode('mode-happy', this)">✦ Trovata! (Gioia)</button>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR IDENTITÀ -->
+  <div class="sidebar">
+    <div>
+      <div class="title">La "Mini Home"</div>
+      <p class="desc">
+        <strong>100% Casa, Zero Pixar:</strong><br>
+        Riconoscibile da lontano in una frazione di secondo. Unisce le proporzioni collezionabili di <em>Clash Mini / Monopoly Go</em> con la finitura materica e la luce dorata di <em>Sunlitt</em>.
+      </p>
+    </div>
+
+    <div>
+      <div class="title" style="margin-bottom: 12px;">Icona App (iOS)</div>
+
+      <div class="icons-row">
+        <!-- Icona Grande 110x110 -->
+        <div class="icon-tile-large">
+          <svg width="68" height="68" viewBox="0 0 100 100">
+            <g transform="translate(50 52) scale(0.48) translate(-100 -140)">
+              <!-- Tetto -->
+              <path d="M44,124 C44,124 93,66 100,66 C107,66 156,124 156,124 C160,129 154,136 146,136 L54,136 Z" fill="url(#roof-grad)" stroke="#FFFFFF" stroke-width="3" />
+              <!-- Mura -->
+              <rect x="56" y="118" width="88" height="96" rx="22" fill="url(#wall-grad)" stroke="#FFFFFF" stroke-width="3" />
+              <!-- Finestra -->
+              <circle cx="100" cy="166" r="22" fill="url(#sun-window)" />
+              <circle cx="94" cy="158" r="4" fill="#FFFFFF" opacity="0.7" />
+              <!-- Zampette -->
+              <rect x="70" y="208" width="18" height="18" rx="9" fill="#1E1744" />
+              <rect x="112" y="208" width="18" height="18" rx="9" fill="#1E1744" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Icona Piccola 54x54 -->
+        <div class="icon-tile-small">
+          <svg width="34" height="34" viewBox="0 0 100 100">
+            <g transform="translate(50 52) scale(0.48) translate(-100 -140)">
+              <path d="M44,124 C44,124 93,66 100,66 C107,66 156,124 156,124 L54,136 Z" fill="#FF6347" />
+              <rect x="56" y="118" width="88" height="96" rx="22" fill="#2E2466" />
+              <circle cx="100" cy="166" r="20" fill="#FFAE42" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Glifo Monocromatico 40x40 -->
+        <div class="glyph-box">
+          <svg width="26" height="26" viewBox="0 0 100 100">
+            <g transform="translate(50 52) scale(0.48) translate(-100 -140)">
+              <path d="M44,124 C44,124 93,66 100,66 C107,66 156,124 156,124 L54,136 Z" fill="#ECEAF5" opacity="0.9" />
+              <rect x="56" y="118" width="88" height="96" rx="22" fill="#ECEAF5" opacity="0.75" />
+              <circle cx="100" cy="166" r="16" fill="#090818" />
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="desc" style="font-size: 12px; color: #767098;">
+        ✦ Tetto-berretto protettivo<br>
+        ✦ Cuore luminoso "porta-fortuna"<br>
+        ✦ Zero occhi = zero effetto cartoon infantile
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function setMode(modeClass, btn) {
+    const stage = document.querySelector('.stage');
+    stage.className = 'stage ' + modeClass;
+
+    document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // Avvio in modalità trotterella
+  setMode('mode-waddle', document.querySelector('.btn'));
+</script>
+
+</body>
+</html>

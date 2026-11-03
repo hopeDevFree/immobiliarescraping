@@ -1,6 +1,11 @@
 import json
+import logging
+import os
 import re
+import urllib.error
 import urllib.request
+
+logger = logging.getLogger(__name__)
 
 SUBITO_URL = "https://www.subito.it/annunci-locali/affitto/appartamenti/?rad=5000&lat=40.87414&lon=14.34105&fr=true"
 # Offset per non sovrascrivere gli ID numerici di Immobiliare su Supabase
@@ -15,14 +20,32 @@ def fetch_subito_listings(only_privates=False):
         "X-Return-Format": "html",
     }
 
+    # Se hai impostato la chiave JINA_API_KEY su Render, la usa
+    jina_api_key = os.environ.get("JINA_API_KEY")
+    if jina_api_key:
+        headers["Authorization"] = f"Bearer {jina_api_key}"
+
     req = urllib.request.Request(jina_url, headers=headers)
-    html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            html = response.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        logger.warning(f"Subito fetch failed (Jina HTTP {e.code}): {e.reason}")
+        return []
+    except Exception as e:
+        logger.warning(f"Subito fetch failed with unexpected error: {e}")
+        return []
 
     match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html)
     if not match:
         return []
 
-    data = json.loads(match.group(1))
+    try:
+        data = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return []
+
     items_state = data.get("props", {}).get("pageProps", {}).get("initialState", {}).get("items", {})
     ads = items_state.get("originalList") or items_state.get("list") or []
 

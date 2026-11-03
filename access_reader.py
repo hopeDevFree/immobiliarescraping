@@ -50,7 +50,8 @@ def _get_reader(url, transport="curl"):
                     )
             else:
                 from curl_cffi import requests
-                options = {"impersonate": "chrome"} if transport == "chrome" else {}
+                # Usa l'impronta di Chrome per evitare blocchi
+                options = {"impersonate": "chrome"} if transport in ("chrome", "curl") else {}
                 resp_obj = requests.get(
                     READER_PREFIX + url,
                     timeout=READER_TIMEOUT,
@@ -59,7 +60,14 @@ def _get_reader(url, transport="curl"):
                     **options,
                 )
 
-            # Ritorna la risposta ottenuta
+            # FIX: Se Jina risponde con 429 (Rate Limit), aspetta e riprova!
+            if resp_obj.status_code == 429:
+                if attempt < max_retries - 1:
+                    wait_time = 4 * (attempt + 1)
+                    logger.warning(f"Jina Reader 429 (Rate Limit). Attesa {wait_time}s prima di riprovare...")
+                    time.sleep(wait_time)
+                    continue
+
             return resp_obj
 
         except Exception as exc:
