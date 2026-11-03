@@ -7,7 +7,6 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from access_browser import VARIANTS, probe_browser
 from access_http import HttpScanError, probe_http, scan_http
 from access_reader import READER_TRANSPORTS, scan_reader
 from search_config import RADIUS_URL
