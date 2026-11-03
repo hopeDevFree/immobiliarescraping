@@ -102,6 +102,7 @@ def _parse_reader(response):
         payload = json.loads(raw)
     except (ValueError, TypeError):
         raise HttpScanError("reader_invalid_json", response.status_code) from None
+    logger.info("JSON RICEVUTO DA JINA: %s", json.dumps(payload)[:1000])
     candidates = [payload]
     if isinstance(payload, dict):
         for container in (payload, payload.get("data")):
