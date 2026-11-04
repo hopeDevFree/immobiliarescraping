@@ -142,7 +142,6 @@ def scan_reader(max_pages=10, transport="curl"):
     if transport not in READER_TRANSPORTS:
         raise HttpScanError("reader_invalid_transport")
     url = diagnostic_targets()[2][1]
-    expected_total = None
     pending = {1}
     visited = set()
     by_id = {}
@@ -161,8 +160,7 @@ def scan_reader(max_pages=10, transport="curl"):
         try:
             page = _parse_reader(_get_reader(target, transport))
         except Exception as exc:
-            # Se pagina 2 viene bloccata da DataDome ma abbiamo già gli annunci di pagina 1,
-            # NON crashare! Salva quelli che abbiamo invece di azzerare la scansione!
+            # Se una pagina fallisce ma abbiamo già annunci, non buttare via tutto!
             if by_id:
                 logger.warning(
                     "Pagina %d non disponibile (%s). Procedo con i %d annunci già recuperati.",
@@ -171,12 +169,8 @@ def scan_reader(max_pages=10, transport="curl"):
                 break
             raise
 
-        total = page["total"]
-        if expected_total is not None and total != expected_total:
-            raise HttpScanError("reader_total_changed")
-        expected_total = total
         visited.add(number)
-        by_id.update((row["id"], row) for row in page["rows"])
+        by_id.update((row["id"], row) for row in page.get("rows", []))
 
         # Pianifica la pagina successiva se presente
         pages = page.get("maxPages")
