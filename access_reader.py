@@ -152,6 +152,10 @@ def scan_reader(max_pages=10, transport="curl"):
         number = min(pending)
         pending.remove(number)
         target = url if number == 1 else _page_url(url, number)
+
+        if visited:
+            time.sleep(4)
+
         page = _parse_reader(_get_reader(target, transport))
         total = page["total"]
         if expected_total is not None and total != expected_total:

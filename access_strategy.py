@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,7 +15,6 @@ from search_config import RADIUS_URL
 
 logger = logging.getLogger(__name__)
 
-# Definite qui per evitare qualsiasi errore di importazione circolare
 VARIANTS = ("direct_tab", "home_then_search", "plain_start")
 
 
@@ -58,7 +58,6 @@ class AccessScanner:
             return await self.repeat(executable, profile_dir)
         self.started = True
 
-        # 1. Testiamo prima il reader (veloce)
         self.report["state"] = "testing_reader"
         self.publish()
 
@@ -67,7 +66,7 @@ class AccessScanner:
                 logger.info("Test reader con transport='%s'...", transport)
                 rows = await asyncio.to_thread(scan_reader, transport=transport)
             except Exception as exc:
-                logger.warning("Reader transport='%s' non riuscito (DataDome/Captcha rilevato): %s", transport, exc)
+                logger.warning("Reader transport='%s' non riuscito (DataDome/Captcha): %s", transport, exc)
                 self.report["experiments"].append({
                     "method": "reader",
                     "transport": transport,
@@ -75,7 +74,6 @@ class AccessScanner:
                     **error_evidence(exc)
                 })
                 self.publish()
-                # Se DataDome intercetta il reader, passiamo a Chromium
                 break
             else:
                 self.report["experiments"].append({
@@ -86,7 +84,10 @@ class AccessScanner:
                 })
                 return self.choose({"method": "reader", "transport": transport}, rows)
 
-        # 2. Se il Reader è bloccato da DataDome, avviamo Chromium stealth (nodriver)
+        # Fallback iniziale su Chromium se il reader parte bloccato
+        return await self._fallback_browser(executable, profile_dir)
+
+    async def _fallback_browser(self, executable, profile_dir):
         logger.info("Reader bloccato da DataDome. Avvio scansione con Chromium anti-detect...")
         self.report["state"] = "testing_browser"
         self.publish()
@@ -100,38 +101,16 @@ class AccessScanner:
                 if status == "ok" and result.get("listings") is not None:
                     rows = result["listings"]
                     logger.info("Browser variante '%s' RIUSCITO! Trovati %d annunci", variant, len(rows))
-                    self.report["experiments"].append({
-                        "method": "browser",
-                        "variant": variant,
-                        "status": "ok",
-                        "total": len(rows)
-                    })
                     return self.choose({"method": "browser", "variant": variant}, rows)
-                else:
-                    logger.warning("Browser variante '%s' non riuscito: reason=%s (status=%s)", variant, result.get("reason"), status)
-                    self.report["experiments"].append({
-                        "method": "browser",
-                        "variant": variant,
-                        "status": "failed",
-                        "reason": result.get("reason")
-                    })
-                    self.publish()
             except Exception as exc:
-                logger.error("Errore durante test browser variante '%s': %r", variant, exc, exc_info=True)
-                self.report["experiments"].append({
-                    "method": "browser",
-                    "variant": variant,
-                    "status": "failed",
-                    "reason": str(exc)
-                })
-                self.publish()
+                logger.error("Errore browser variante '%s': %r", variant, exc)
 
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono stati bloccati da DataDome.")
+        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono bloccati da DataDome.")
 
     async def repeat(self, executable, profile_dir):
-        method = self.selected or {"method": "browser", "variant": "home_then_search"}
+        method = self.selected or {"method": "reader", "transport": "curl"}
         try:
             if method.get("method") == "reader":
                 rows = await asyncio.to_thread(scan_reader, transport=method.get("transport", "curl"))
@@ -142,10 +121,20 @@ class AccessScanner:
                 result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", variant)
                 rows = result.pop("listings", None)
                 if result.get("status") != "ok" or rows is None:
-                    self.report["last_browser_result"] = result
                     raise RuntimeError("SEARCH_BLOCKED: " + result.get("reason", "search_unavailable"))
             return self.choose(method, rows)
         except Exception as exc:
+            logger.warning("Metodo '%s' fallito nel ciclo repeat (%s). Provo recupero con Chromium...", method.get("method"), exc)
+
+            # Se il reader fallisce durante un ciclo, prova subito il recupero con Chromium!
+            if method.get("method") == "reader":
+                try:
+                    return await self._fallback_browser(executable, profile_dir)
+                except Exception:
+                    pass
+
+            # Se fallisce tutto, resetta selected così al prossimo ciclo rifarà l'analisi completa
+            self.selected = None
             self.report["state"] = "unavailable"
             self.report["last_scan"] = {"status": "failed", **error_evidence(exc)}
             self.publish()
