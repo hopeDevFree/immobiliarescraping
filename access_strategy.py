@@ -74,7 +74,7 @@ class AccessScanner:
                     **error_evidence(exc)
                 })
                 self.publish()
-                break
+                continue
             else:
                 self.report["experiments"].append({
                     "method": "reader",
