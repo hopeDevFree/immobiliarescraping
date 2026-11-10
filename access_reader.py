@@ -160,13 +160,11 @@ def scan_reader(max_pages=10, transport="curl"):
         try:
             page = _parse_reader(_get_reader(target, transport))
         except Exception as exc:
-            # Se una pagina fallisce ma abbiamo già annunci, non buttare via tutto!
-            if by_id:
-                logger.warning(
-                    "Pagina %d non disponibile (%s). Procedo con i %d annunci già recuperati.",
-                    number, exc, len(by_id)
-                )
-                break
+            logger.error(
+                "SCANSIONE INCOMPLETA: pagina %d non disponibile (%s). "
+                "Recuperati %d annunci, risultati non pubblicati.",
+                number, exc, len(by_id)
+            )
             raise
 
         visited.add(number)
