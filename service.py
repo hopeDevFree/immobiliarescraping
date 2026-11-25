@@ -1,6 +1,5 @@
 """Persistent scan history and a single sequential scheduler."""
-from scraper_subito import fetch_subito_listings
-from scraper_idealista import fetch_idealista_listings
+
 import asyncio
 import json
 import logging
@@ -14,14 +13,11 @@ import urllib.request
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+
 from notifier import notify_new_listings
-from contextlib import contextmanager
-from datetime import datetime, timezone
-import json
-import logging
-import os
-from pathlib import Path
-import sqlite3
+from scraper import scan
+from scraper_idealista import fetch_idealista_listings
+from scraper_subito import fetch_subito_listings
 
 try:
     import psycopg2
@@ -38,13 +34,11 @@ def utc_now():
     return datetime.now(timezone.utc).isoformat()
 
 
-from scraper import scan
-
-logger = logging.getLogger(__name__)
-
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+def _env_flag(name, default=True):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
 class TelegramNotifier:
@@ -172,7 +166,7 @@ class Store:
             finally:
                 db.close()
 
-    def save(self, rows):
+    def save(self, rows, deactivate_missing=True):
         identifiers = {row["id"] for row in rows}
         if len(identifiers) != len(rows):
             raise ValueError("Duplicate listing IDs in scan")
@@ -210,11 +204,13 @@ class Store:
 
                 db.execute(upsert_query, (row["id"], payload, now, now))
 
-            # 3. Disattiva annunci non più presenti
-            missing = [i for i, r in previous.items() if r["active"] and i not in identifiers]
-            if missing:
-                update_query = f"UPDATE listings SET active=0 WHERE id={param}"
-                db.executemany(update_query, [(i,) for i in missing])
+            # 3. Disattiva annunci non più presenti (solo se la scansione è completa)
+            missing = []
+            if deactivate_missing:
+                missing = [i for i, r in previous.items() if r["active"] and i not in identifiers]
+                if missing:
+                    update_query = f"UPDATE listings SET active=0 WHERE id={param}"
+                    db.executemany(update_query, [(i,) for i in missing])
 
             # 4. Registra scansione riuscita
             scan_query = f"""
@@ -265,31 +261,68 @@ class Store:
 
 
 def run_once(store, executable, profile_dir, scanner=scan):
+    enabled_sources = 0
+    succeeded_sources = 0
+    failed_sources = []
+    errors = []
+
+    # 1. Scansione Immobiliare.it (opzionale e protetta)
+    imm_rows = []
+    if _env_flag("ENABLE_IMMOBILIARE", default=True):
+        enabled_sources += 1
+        try:
+            imm_rows = asyncio.run(scanner(executable, profile_dir))
+            succeeded_sources += 1
+        except Exception as exc:
+            logger.warning("Immobiliare non disponibile in questo ciclo: %s", exc)
+            failed_sources.append("immobiliare")
+            errors.append(f"immobiliare: {exc}")
+    else:
+        logger.info("Immobiliare.it disabilitato (ENABLE_IMMOBILIARE=0)")
+
+    # 2. Scansione Subito.it (protetta)
+    enabled_sources += 1
     try:
-        # 1. Scansione Immobiliare.it
-        imm_rows = asyncio.run(scanner(executable, profile_dir))
+        subito_rows = fetch_subito_listings()
+        succeeded_sources += 1
+    except Exception as exc:
+        logger.warning("Subito non disponibile in questo ciclo: %s", exc)
+        subito_rows = []
+        failed_sources.append("subito")
+        errors.append(f"subito: {exc}")
 
-        # 2. Scansione Subito.it (protetta)
-        try:
-            subito_rows = fetch_subito_listings()
-        except Exception as e:
-            logger.warning("Subito non disponibile in questo ciclo: %s", e)
-            subito_rows = []
+    # 3. Scansione Idealista (protetta con raggio matematico di 5 km)
+    enabled_sources += 1
+    try:
+        idealista_rows = fetch_idealista_listings()
+        succeeded_sources += 1
+    except Exception as exc:
+        logger.warning("Idealista non disponibile in questo ciclo: %s", exc)
+        idealista_rows = []
+        failed_sources.append("idealista")
+        errors.append(f"idealista: {exc}")
 
-        # 3. Scansione Idealista (protetta con raggio matematico di 5 km)
-        try:
-            idealista_rows = fetch_idealista_listings()
-        except Exception as e:
-            logger.warning("Idealista non disponibile in questo ciclo: %s", e)
-            idealista_rows = []
+    if enabled_sources == 0 or succeeded_sources == 0:
+        err_msg = "; ".join(errors) if errors else "Nessuna sorgente attiva"
+        logger.error("SCAN_FAILED: existing listings preserved (%s)", err_msg)
+        store.failure(err_msg)
+        return False
 
+    try:
         # Unione di tutti gli annunci
         rows = imm_rows + subito_rows + idealista_rows
+        partial_failure = bool(failed_sources)
 
-        result = store.save(rows)
+        result = store.save(rows, deactivate_missing=not partial_failure)
         new_rows = result.pop("new_rows", [])
         first = result.pop("first_population", False)
-        logger.info("SCAN_OK %s", json.dumps(result))
+        logger.info(
+            "SCAN_OK sources_ok=%d/%d failed=%s %s",
+            succeeded_sources,
+            enabled_sources,
+            failed_sources or "none",
+            json.dumps(result),
+        )
         try:
             notify_new_listings(new_rows, first_population=first)
         except Exception:
