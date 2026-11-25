@@ -19,9 +19,13 @@ VARIANTS = ("direct_tab", "home_then_search", "plain_start")
 
 
 def error_evidence(exc):
-    result = {"error_type": type(exc).__name__}
+    result = {"error_type": type(exc).__name__, "message": str(exc)}
     if isinstance(exc, HttpScanError):
-        result.update(category=exc.category, http_status=exc.status, transport_error_code=exc.transport_error_code)
+        result.update(
+            category=exc.category,
+            http_status=exc.status,
+            transport_error_code=exc.transport_error_code,
+        )
         if getattr(exc, "details", None):
             result["reader_error"] = exc.details
     return result
@@ -33,8 +37,11 @@ class AccessScanner:
         self.started = False
         self.selected = None
         self.report = {
-            "source_url": RADIUS_URL, "filters_unchanged": True,
-            "state": "pending", "selected": None, "experiments": [],
+            "source_url": RADIUS_URL,
+            "filters_unchanged": True,
+            "state": "pending",
+            "selected": None,
+            "experiments": [],
         }
 
     def publish(self):
@@ -42,7 +49,7 @@ class AccessScanner:
         self.report["revision"] = os.environ.get("RENDER_GIT_COMMIT", "unknown")
         self.report_path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.report_path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self.report, ensure_ascii=False), encoding="utf-8")
+        temporary.write_text(json.dumps(self.report, ensure_ascii=False, default=str), encoding="utf-8")
         temporary.replace(self.report_path)
 
     def choose(self, method, rows):
@@ -58,6 +65,7 @@ class AccessScanner:
             return await self.repeat(executable, profile_dir)
         self.started = True
 
+        self.report["experiments"] = []
         self.report["state"] = "testing_reader"
         self.publish()
 
@@ -71,7 +79,7 @@ class AccessScanner:
                     "method": "reader",
                     "transport": transport,
                     "status": "failed",
-                    **error_evidence(exc)
+                    **error_evidence(exc),
                 })
                 self.publish()
                 continue
@@ -80,7 +88,7 @@ class AccessScanner:
                     "method": "reader",
                     "transport": transport,
                     "status": "ok",
-                    "total": len(rows)
+                    "total": len(rows),
                 })
                 return self.choose({"method": "reader", "transport": transport}, rows)
 
@@ -97,17 +105,53 @@ class AccessScanner:
             logger.info("Tentativo Browser con variante='%s'...", variant)
             try:
                 result = await probe_browser(executable, profiles_root, variant)
-                status = result.get("status")
-                if status == "ok" and result.get("listings") is not None:
-                    rows = result["listings"]
-                    logger.info("Browser variante '%s' RIUSCITO! Trovati %d annunci", variant, len(rows))
-                    return self.choose({"method": "browser", "variant": variant}, rows)
-            except Exception as exc:
-                logger.error("Errore browser variante '%s': %r", variant, exc)
+                if not isinstance(result, dict):
+                    raise TypeError(f"probe_browser ha restituito {type(result).__name__} invece di dict")
 
+                status = result.get("status")
+                listings = result.get("listings")
+                if status == "ok" and listings is not None:
+                    logger.info("Browser variante '%s' RIUSCITO! Trovati %d annunci", variant, len(listings))
+                    self.report["experiments"].append({
+                        "method": "browser",
+                        "variant": variant,
+                        "status": "ok",
+                        "total": len(listings),
+                    })
+                    return self.choose({"method": "browser", "variant": variant}, listings)
+
+                reason = result.get("reason", "unknown")
+                details = {k: v for k, v in result.items() if k not in ("listings", "status", "reason")}
+                logger.warning(
+                    "Browser variante '%s' fallito: status=%s reason=%s details=%s",
+                    variant,
+                    status,
+                    reason,
+                    details,
+                )
+                self.report["experiments"].append({
+                    "method": "browser",
+                    "variant": variant,
+                    "status": status or "failed",
+                    "reason": reason,
+                    **({"details": details} if details else {}),
+                })
+                self.publish()
+            except Exception as exc:
+                logger.exception("Errore browser variante '%s': %r", variant, exc)
+                self.report["experiments"].append({
+                    "method": "browser",
+                    "variant": variant,
+                    "status": "error",
+                    **error_evidence(exc),
+                })
+                self.publish()
+
+        self.selected = None
+        self.started = False
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono bloccati da DataDome.")
+        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono bloccati o falliti.")
 
     async def repeat(self, executable, profile_dir):
         method = self.selected or {"method": "reader", "transport": "curl"}
@@ -119,23 +163,36 @@ class AccessScanner:
             else:
                 variant = method.get("variant", "home_then_search")
                 result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", variant)
-                rows = result.pop("listings", None)
+                if not isinstance(result, dict):
+                    raise TypeError(f"probe_browser ha restituito {type(result).__name__} invece di dict")
+                rows = result.get("listings")
                 if result.get("status") != "ok" or rows is None:
-                    raise RuntimeError("SEARCH_BLOCKED: " + result.get("reason", "search_unavailable"))
+                    raise RuntimeError(
+                        f"SEARCH_BLOCKED: status={result.get('status')} reason={result.get('reason', 'search_unavailable')}"
+                    )
             return self.choose(method, rows)
         except Exception as exc:
-            logger.warning("Metodo '%s' fallito nel ciclo repeat (%s). Provo recupero con Chromium...", method.get("method"), exc)
-
-            # Se il reader fallisce durante un ciclo, prova subito il recupero con Chromium!
+            final_exc = exc
             if method.get("method") == "reader":
+                logger.warning("Metodo 'reader' fallito nel ciclo repeat (%s). Provo recupero con Chromium...", exc)
                 try:
                     return await self._fallback_browser(executable, profile_dir)
-                except Exception:
-                    pass
+                except Exception as browser_exc:
+                    logger.error("Recupero con Chromium fallito: %s", browser_exc)
+                    final_exc = browser_exc
+            else:
+                logger.warning("Metodo '%s' fallito nel ciclo repeat (%s).", method.get("method"), exc)
 
-            # Se fallisce tutto, resetta selected così al prossimo ciclo rifarà l'analisi completa
+            # Se fallisce tutto, resetta selected e started così al prossimo ciclo rifarà l'analisi completa
             self.selected = None
+            self.started = False
             self.report["state"] = "unavailable"
-            self.report["last_scan"] = {"status": "failed", **error_evidence(exc)}
+            last_scan = {"status": "failed", **error_evidence(final_exc)}
+            if final_exc is not exc:
+                last_scan["initial_error"] = error_evidence(exc)
+            self.report["last_scan"] = last_scan
             self.publish()
-            raise
+
+            if final_exc is exc:
+                raise
+            raise final_exc from exc
