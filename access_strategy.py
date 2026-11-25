@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import os
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -16,6 +15,26 @@ from search_config import RADIUS_URL
 logger = logging.getLogger(__name__)
 
 VARIANTS = ("direct_tab", "home_then_search", "plain_start")
+
+
+# Diagnostic fields intentionally exclude URLs, response bodies, cookies,
+# request headers, listing IDs, and CAPTCHA-related tokens.
+HTTP_DIAGNOSTIC_FIELDS = (
+    "profile",
+    "status",
+    "title",
+    "json_type",
+    "recognized_results",
+    "count",
+    "total",
+    "maxPages",
+    "category",
+    "error_type",
+    "transport_error_code",
+    "query_unchanged",
+    "filters_unchanged",
+    "technical_parameter_added",
+)
 
 
 def error_evidence(exc):
@@ -36,6 +55,7 @@ class AccessScanner:
         self.report_path = Path(report_path)
         self.started = False
         self.selected = None
+        self.http_probe_done = False
         self.report = {
             "source_url": RADIUS_URL,
             "filters_unchanged": True,
@@ -49,54 +69,123 @@ class AccessScanner:
         self.report["revision"] = os.environ.get("RENDER_GIT_COMMIT", "unknown")
         self.report_path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.report_path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(self.report, ensure_ascii=False, default=str), encoding="utf-8")
+        temporary.write_text(
+            json.dumps(self.report, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
         temporary.replace(self.report_path)
 
     def choose(self, method, rows):
         self.selected = method
         self.report.update(state="working", selected=method)
-        self.report["last_scan"] = {"status": "ok", "total": len(rows), "ids": [r["id"] for r in rows]}
+        self.report["last_scan"] = {
+            "status": "ok",
+            "total": len(rows),
+            "ids": [row["id"] for row in rows],
+        }
         self.publish()
-        logger.info("ACCESS_METHOD_SELECTED %s total=%s", method.get("method") or method.get("variant"), len(rows))
+        logger.info(
+            "ACCESS_METHOD_SELECTED %s total=%s",
+            method.get("method") or method.get("variant"),
+            len(rows),
+        )
         return rows
+
+    async def _run_http_probe(self):
+        """Run the bounded HTTP diagnostic once when explicitly enabled."""
+        if self.http_probe_done:
+            return
+
+        if os.environ.get("ENABLE_HTTP_DIAGNOSTIC") != "1":
+            return
+
+        # Mark it before starting so a transient failure does not trigger six
+        # more diagnostic requests on every subsequent scan in this process.
+        self.http_probe_done = True
+
+        try:
+            diagnostic = await asyncio.to_thread(probe_http)
+            raw_results = diagnostic.get("results", [])
+
+            safe_results = []
+            for item in raw_results:
+                if not isinstance(item, dict):
+                    continue
+                safe_results.append(
+                    {
+                        key: item[key]
+                        for key in HTTP_DIAGNOSTIC_FIELDS
+                        if key in item
+                    }
+                )
+
+            logger.warning(
+                "IMMOBILIARE_HTTP_DIAGNOSTIC %s",
+                json.dumps(safe_results, ensure_ascii=False),
+            )
+        except Exception as exc:
+            # Do not let a diagnostic failure interrupt the normal scan.
+            logger.warning(
+                "IMMOBILIARE_HTTP_DIAGNOSTIC_ERROR type=%s",
+                type(exc).__name__,
+            )
 
     async def __call__(self, executable, profile_dir):
         if self.started:
             return await self.repeat(executable, profile_dir)
+
         self.started = True
 
         self.report["experiments"] = []
         self.report["state"] = "testing_reader"
         self.publish()
 
+        # Optional diagnostic: set ENABLE_HTTP_DIAGNOSTIC=1 in Render.
+        # It performs the six bounded probes defined in access_http.py and
+        # logs only the allowlisted summary fields above.
+        await self._run_http_probe()
+
         for transport in READER_TRANSPORTS:
             try:
                 logger.info("Test reader con transport='%s'...", transport)
                 rows = await asyncio.to_thread(scan_reader, transport=transport)
             except Exception as exc:
-                logger.warning("Reader transport='%s' non riuscito (DataDome/Captcha): %s", transport, exc)
-                self.report["experiments"].append({
-                    "method": "reader",
-                    "transport": transport,
-                    "status": "failed",
-                    **error_evidence(exc),
-                })
+                logger.warning(
+                    "Reader transport='%s' non riuscito (DataDome/Captcha): %s",
+                    transport,
+                    exc,
+                )
+                self.report["experiments"].append(
+                    {
+                        "method": "reader",
+                        "transport": transport,
+                        "status": "failed",
+                        **error_evidence(exc),
+                    }
+                )
                 self.publish()
                 continue
             else:
-                self.report["experiments"].append({
-                    "method": "reader",
-                    "transport": transport,
-                    "status": "ok",
-                    "total": len(rows),
-                })
-                return self.choose({"method": "reader", "transport": transport}, rows)
+                self.report["experiments"].append(
+                    {
+                        "method": "reader",
+                        "transport": transport,
+                        "status": "ok",
+                        "total": len(rows),
+                    }
+                )
+                return self.choose(
+                    {"method": "reader", "transport": transport},
+                    rows,
+                )
 
-        # Fallback iniziale su Chromium se il reader parte bloccato
+        # Fallback iniziale su Chromium se il reader parte bloccato.
         return await self._fallback_browser(executable, profile_dir)
 
     async def _fallback_browser(self, executable, profile_dir):
-        logger.info("Reader bloccato da DataDome. Avvio scansione con Chromium anti-detect...")
+        logger.info(
+            "Reader bloccato da DataDome. Avvio scansione con Chromium..."
+        )
         self.report["state"] = "testing_browser"
         self.publish()
 
@@ -106,22 +195,38 @@ class AccessScanner:
             try:
                 result = await probe_browser(executable, profiles_root, variant)
                 if not isinstance(result, dict):
-                    raise TypeError(f"probe_browser ha restituito {type(result).__name__} invece di dict")
+                    raise TypeError(
+                        "probe_browser ha restituito "
+                        f"{type(result).__name__} invece di dict"
+                    )
 
                 status = result.get("status")
                 listings = result.get("listings")
                 if status == "ok" and listings is not None:
-                    logger.info("Browser variante '%s' RIUSCITO! Trovati %d annunci", variant, len(listings))
-                    self.report["experiments"].append({
-                        "method": "browser",
-                        "variant": variant,
-                        "status": "ok",
-                        "total": len(listings),
-                    })
-                    return self.choose({"method": "browser", "variant": variant}, listings)
+                    logger.info(
+                        "Browser variante '%s' RIUSCITO! Trovati %d annunci",
+                        variant,
+                        len(listings),
+                    )
+                    self.report["experiments"].append(
+                        {
+                            "method": "browser",
+                            "variant": variant,
+                            "status": "ok",
+                            "total": len(listings),
+                        }
+                    )
+                    return self.choose(
+                        {"method": "browser", "variant": variant},
+                        listings,
+                    )
 
                 reason = result.get("reason", "unknown")
-                details = {k: v for k, v in result.items() if k not in ("listings", "status", "reason")}
+                details = {
+                    key: value
+                    for key, value in result.items()
+                    if key not in ("listings", "status", "reason")
+                }
                 logger.warning(
                     "Browser variante '%s' fallito: status=%s reason=%s details=%s",
                     variant,
@@ -129,61 +234,102 @@ class AccessScanner:
                     reason,
                     details,
                 )
-                self.report["experiments"].append({
-                    "method": "browser",
-                    "variant": variant,
-                    "status": status or "failed",
-                    "reason": reason,
-                    **({"details": details} if details else {}),
-                })
+                self.report["experiments"].append(
+                    {
+                        "method": "browser",
+                        "variant": variant,
+                        "status": status or "failed",
+                        "reason": reason,
+                        **({"details": details} if details else {}),
+                    }
+                )
                 self.publish()
             except Exception as exc:
-                logger.exception("Errore browser variante '%s': %r", variant, exc)
-                self.report["experiments"].append({
-                    "method": "browser",
-                    "variant": variant,
-                    "status": "error",
-                    **error_evidence(exc),
-                })
+                logger.exception(
+                    "Errore browser variante '%s': %r",
+                    variant,
+                    exc,
+                )
+                self.report["experiments"].append(
+                    {
+                        "method": "browser",
+                        "variant": variant,
+                        "status": "error",
+                        **error_evidence(exc),
+                    }
+                )
                 self.publish()
 
         self.selected = None
         self.started = False
         self.report.update(state="no_working_method", selected=None)
         self.publish()
-        raise RuntimeError("Tutti i metodi di accesso (Reader e Browser) sono bloccati o falliti.")
+        raise RuntimeError(
+            "Tutti i metodi di accesso (Reader e Browser) sono bloccati o falliti."
+        )
 
     async def repeat(self, executable, profile_dir):
         method = self.selected or {"method": "reader", "transport": "curl"}
         try:
             if method.get("method") == "reader":
-                rows = await asyncio.to_thread(scan_reader, transport=method.get("transport", "curl"))
+                rows = await asyncio.to_thread(
+                    scan_reader,
+                    transport=method.get("transport", "curl"),
+                )
             elif method.get("method") == "http":
-                rows = await asyncio.to_thread(scan_http, method["profile"], method["url"])
+                rows = await asyncio.to_thread(
+                    scan_http,
+                    method["profile"],
+                    method["url"],
+                )
             else:
                 variant = method.get("variant", "home_then_search")
-                result = await probe_browser(executable, Path(profile_dir).parent / "access-profiles", variant)
+                result = await probe_browser(
+                    executable,
+                    Path(profile_dir).parent / "access-profiles",
+                    variant,
+                )
                 if not isinstance(result, dict):
-                    raise TypeError(f"probe_browser ha restituito {type(result).__name__} invece di dict")
+                    raise TypeError(
+                        "probe_browser ha restituito "
+                        f"{type(result).__name__} invece di dict"
+                    )
+
                 rows = result.get("listings")
                 if result.get("status") != "ok" or rows is None:
                     raise RuntimeError(
-                        f"SEARCH_BLOCKED: status={result.get('status')} reason={result.get('reason', 'search_unavailable')}"
+                        "SEARCH_BLOCKED: status="
+                        f"{result.get('status')} "
+                        f"reason={result.get('reason', 'search_unavailable')}"
                     )
+
             return self.choose(method, rows)
+
         except Exception as exc:
             final_exc = exc
             if method.get("method") == "reader":
-                logger.warning("Metodo 'reader' fallito nel ciclo repeat (%s). Provo recupero con Chromium...", exc)
+                logger.warning(
+                    "Metodo 'reader' fallito nel ciclo repeat (%s). "
+                    "Provo recupero con Chromium...",
+                    exc,
+                )
                 try:
                     return await self._fallback_browser(executable, profile_dir)
                 except Exception as browser_exc:
-                    logger.error("Recupero con Chromium fallito: %s", browser_exc)
+                    logger.error(
+                        "Recupero con Chromium fallito: %s",
+                        browser_exc,
+                    )
                     final_exc = browser_exc
             else:
-                logger.warning("Metodo '%s' fallito nel ciclo repeat (%s).", method.get("method"), exc)
+                logger.warning(
+                    "Metodo '%s' fallito nel ciclo repeat (%s).",
+                    method.get("method"),
+                    exc,
+                )
 
-            # Se fallisce tutto, resetta selected e started così al prossimo ciclo rifarà l'analisi completa
+            # Se fallisce tutto, resetta selected e started così al prossimo
+            # ciclo rifarà l'analisi completa.
             self.selected = None
             self.started = False
             self.report["state"] = "unavailable"
